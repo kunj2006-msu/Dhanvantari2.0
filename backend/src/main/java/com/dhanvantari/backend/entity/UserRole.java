@@ -1,0 +1,6 @@
+package com.dhanvantari.backend.entity;
+
+public enum UserRole {
+    ROLE_DOCTOR,
+    ROLE_PATIENT
+}
