@@ -3,6 +3,8 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authService } from '../services/authService';
 import { motion, AnimatePresence } from 'framer-motion';
+import { CustomDropdown } from '../components/CustomDropdown';
+import { CustomDatePicker } from '../components/CustomDatePicker';
 
 const OverviewCanvas = ({ onSelectView }: { onSelectView: (view: any) => void }) => (
   <div className="flex-1 flex items-center justify-center p-8 h-full">
@@ -292,12 +294,14 @@ const AppointmentsCanvas = ({ isHistoryOpen, setIsHistoryOpen }: any) => {
   const [selectedCity, setSelectedCity] = useState<string>('');
   const [selectedSpecialty, setSelectedSpecialty] = useState<string>('');
   const [selectedDoctorId, setSelectedDoctorId] = useState<number | ''>('');
+  const [date, setDate] = useState<string>('');
+  const [reason, setReason] = useState<string>('');
 
-  const mockAppointments = [
+  const [appointments, setAppointments] = useState([
     { id: 1, doctor: 'Dr. Sharma', specialty: 'Cardiologist', date: 'May 10, 2026', time: '10:00 AM', status: 'upcoming' },
     { id: 2, doctor: 'Dr. Gupta', specialty: 'Dermatologist', date: 'Apr 25, 2026', time: '02:30 PM', status: 'completed' },
     { id: 3, doctor: 'Dr. Patel', specialty: 'General Physician', date: 'Mar 12, 2026', time: '11:15 AM', status: 'completed' }
-  ];
+  ]);
 
   const mockDoctors = [
     { id: 1, name: "Dr. Sharma", specialization: "Cardiologist", state: "Gujarat", city: "Vadodara", experience: "15+ Years", clinicAddress: "123 Heart Care Center, Alkapuri, Vadodara" },
@@ -313,6 +317,41 @@ const AppointmentsCanvas = ({ isHistoryOpen, setIsHistoryOpen }: any) => {
   };
 
   const timeSlots = ['09:00 AM', '10:00 AM', '11:30 AM', '02:00 PM', '03:30 PM', '04:15 PM'];
+
+  const today = new Date().toISOString().split('T')[0];
+
+  const handleResetForm = () => {
+    setSelectedState('');
+    setSelectedCity('');
+    setSelectedSpecialty('');
+    setSelectedDoctorId('');
+    setSelectedTime(null);
+    setDate('');
+    setReason('');
+  };
+
+  const handleConfirmAppointment = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!date || !selectedTime || !selectedDoctorId) {
+      alert('Please fill all required fields');
+      return;
+    }
+    const doctorProfile = mockDoctors.find(d => d.id === selectedDoctorId);
+    if (!doctorProfile) return;
+
+    const newAppointment = {
+      id: Date.now(),
+      doctor: doctorProfile.name,
+      specialty: doctorProfile.specialization,
+      date: new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      time: selectedTime,
+      status: 'upcoming'
+    };
+    
+    setAppointments([newAppointment, ...appointments]);
+    handleResetForm();
+    alert('Appointment Confirmed!');
+  };
 
   // Filter doctors based on selections
   const filteredDoctors = mockDoctors.filter(doc => {
@@ -340,12 +379,14 @@ const AppointmentsCanvas = ({ isHistoryOpen, setIsHistoryOpen }: any) => {
             </div>
             
             <div className="p-4 min-w-[320px]">
-              <button className="w-full py-2.5 rounded-xl bg-teal-500/10 hover:bg-teal-500/20 border border-teal-500/30 text-teal-400 font-medium transition-colors shadow-lg mb-6">
+              <button 
+                onClick={handleResetForm}
+                className="w-full py-2.5 rounded-xl bg-teal-500/10 hover:bg-teal-500/20 border border-teal-500/30 text-teal-400 font-medium transition-colors shadow-lg mb-6">
                 + Book New
               </button>
               
               <div className="text-sm flex flex-col gap-3">
-                {mockAppointments.map((apt) => (
+                {appointments.map((apt) => (
                   <div key={apt.id} className="p-4 rounded-xl bg-slate-800/40 border border-white/5 hover:bg-slate-800/60 transition-colors group">
                     <div className="flex justify-between items-start mb-2">
                       <h4 className="font-semibold text-slate-200">{apt.doctor}</h4>
@@ -389,42 +430,34 @@ const AppointmentsCanvas = ({ isHistoryOpen, setIsHistoryOpen }: any) => {
           >
             <h2 className="text-2xl font-bold text-slate-100 mb-8 border-b border-white/5 pb-4">Book a Consultation</h2>
             
-            <form className="space-y-6" onSubmit={(e) => e.preventDefault()}>
+            <form className="space-y-6" onSubmit={handleConfirmAppointment}>
               {/* Row 1: Location */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-slate-400">State</label>
-                  <select 
+                  <CustomDropdown 
                     value={selectedState}
-                    onChange={(e) => {
-                      setSelectedState(e.target.value);
+                    onChange={(val) => {
+                      setSelectedState(val);
                       setSelectedCity('');
                       setSelectedDoctorId('');
                     }}
-                    className="w-full bg-slate-800/50 border border-white/10 rounded-xl px-4 py-3 text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500/50 appearance-none cursor-pointer"
-                  >
-                    <option value="" className="text-slate-500">Select State...</option>
-                    {Object.keys(locationData).map(state => (
-                      <option key={state} value={state} className="bg-slate-800">{state}</option>
-                    ))}
-                  </select>
+                    options={Object.keys(locationData)}
+                    placeholder="Select State..."
+                  />
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-slate-400">City</label>
-                  <select 
+                  <CustomDropdown 
                     value={selectedCity}
-                    onChange={(e) => {
-                      setSelectedCity(e.target.value);
+                    onChange={(val) => {
+                      setSelectedCity(val);
                       setSelectedDoctorId('');
                     }}
+                    options={selectedState ? locationData[selectedState] : []}
+                    placeholder={selectedState ? "Select City..." : "Select State first"}
                     disabled={!selectedState}
-                    className="w-full bg-slate-800/50 border border-white/10 rounded-xl px-4 py-3 text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500/50 appearance-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <option value="" className="text-slate-500">{selectedState ? "Select City..." : "Select State first"}</option>
-                    {selectedState && locationData[selectedState].map(city => (
-                      <option key={city} value={city} className="bg-slate-800">{city}</option>
-                    ))}
-                  </select>
+                  />
                 </div>
               </div>
 
@@ -432,32 +465,24 @@ const AppointmentsCanvas = ({ isHistoryOpen, setIsHistoryOpen }: any) => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-slate-400">Specialization</label>
-                  <select 
+                  <CustomDropdown 
                     value={selectedSpecialty}
-                    onChange={(e) => {
-                      setSelectedSpecialty(e.target.value);
+                    onChange={(val) => {
+                      setSelectedSpecialty(val);
                       setSelectedDoctorId('');
                     }}
-                    className="w-full bg-slate-800/50 border border-white/10 rounded-xl px-4 py-3 text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500/50 appearance-none cursor-pointer"
-                  >
-                    <option value="" className="text-slate-500">Any Specialization...</option>
-                    <option value="General Physician" className="bg-slate-800">General Physician</option>
-                    <option value="Cardiologist" className="bg-slate-800">Cardiologist</option>
-                    <option value="Dermatologist" className="bg-slate-800">Dermatologist</option>
-                  </select>
+                    options={['General Physician', 'Cardiologist', 'Dermatologist']}
+                    placeholder="Any Specialization..."
+                  />
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-slate-400">Doctor</label>
-                  <select 
+                  <CustomDropdown 
                     value={selectedDoctorId}
-                    onChange={(e) => setSelectedDoctorId(Number(e.target.value))}
-                    className="w-full bg-slate-800/50 border border-white/10 rounded-xl px-4 py-3 text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500/50 appearance-none cursor-pointer"
-                  >
-                    <option value="" className="text-slate-500">Select Doctor...</option>
-                    {filteredDoctors.map(doc => (
-                      <option key={doc.id} value={doc.id} className="bg-slate-800">{doc.name} - {doc.specialization}</option>
-                    ))}
-                  </select>
+                    onChange={(val) => setSelectedDoctorId(Number(val))}
+                    options={filteredDoctors.map(doc => ({ value: doc.id, label: `${doc.name} - ${doc.specialization}` }))}
+                    placeholder="Select Doctor..."
+                  />
                 </div>
               </div>
 
@@ -491,10 +516,10 @@ const AppointmentsCanvas = ({ isHistoryOpen, setIsHistoryOpen }: any) => {
               <div className="space-y-4 pt-2">
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-slate-400">Date</label>
-                  <input 
-                    type="date" 
-                    className="w-full bg-slate-800/50 border border-white/10 rounded-xl px-4 py-3 text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500/50 custom-date-picker"
-                    style={{ colorScheme: 'dark' }}
+                  <CustomDatePicker 
+                    value={date}
+                    onChange={setDate}
+                    minDate={today}
                   />
                 </div>
                 
@@ -524,6 +549,8 @@ const AppointmentsCanvas = ({ isHistoryOpen, setIsHistoryOpen }: any) => {
                 <label className="text-sm font-medium text-slate-400">Reason for visit (Symptoms/Notes)</label>
                 <textarea 
                   rows={3}
+                  value={reason}
+                  onChange={(e) => setReason(e.target.value)}
                   className="w-full bg-slate-800/50 border border-white/10 rounded-xl px-4 py-3 text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500/50 resize-y min-h-[100px]"
                   placeholder="Please describe your symptoms briefly..."
                 />
@@ -635,17 +662,13 @@ export default function PatientDashboard() {
           {/* Language Dropdown */}
           <div className="flex items-center gap-2 bg-slate-900 border border-white/10 rounded-lg px-3 py-1.5 focus-within:ring-2 focus-within:ring-teal-500 transition-all">
             <Globe className="w-4 h-4 text-slate-400" />
-            <select 
-              value={language}
-              onChange={(e) => setLanguage(e.target.value)}
-              className="bg-transparent text-sm text-slate-300 focus:outline-none cursor-none appearance-none pr-4"
-            >
-              {languages.map(lang => (
-                <option key={lang} value={lang} className="bg-slate-900 text-slate-300">
-                  {lang}
-                </option>
-              ))}
-            </select>
+            <div className="w-40">
+              <CustomDropdown 
+                value={language}
+                onChange={setLanguage}
+                options={languages}
+              />
+            </div>
           </div>
         </div>
       </header>

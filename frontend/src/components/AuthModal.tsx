@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, AlertCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { authService } from '../services/authService';
+import { CustomDropdown } from './CustomDropdown';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -251,12 +252,16 @@ export default function AuthModal({ isOpen, onClose, initialUserType }: AuthModa
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-slate-300 mb-1">Gender</label>
-                    <select required value={gender} onChange={(e) => setGender(e.target.value)} className="w-full px-4 py-2 bg-slate-800/50 border border-white/10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-teal-500/50 [&>option]:bg-slate-800 transition-all">
-                      <option value="">Select Gender</option>
-                      <option value="male">Male</option>
-                      <option value="female">Female</option>
-                      <option value="other">Other</option>
-                    </select>
+                    <CustomDropdown
+                      value={gender}
+                      onChange={setGender}
+                      options={[
+                        { value: 'male', label: 'Male' },
+                        { value: 'female', label: 'Female' },
+                        { value: 'other', label: 'Other' }
+                      ]}
+                      placeholder="Select Gender"
+                    />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-slate-300 mb-2">Pre-medical Conditions</label>
@@ -316,35 +321,25 @@ export default function AuthModal({ isOpen, onClose, initialUserType }: AuthModa
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-slate-300 mb-1">State</label>
-                      <select
-                        required
+                      <CustomDropdown
                         value={selectedState}
-                        onChange={(e) => {
-                          setSelectedState(e.target.value);
+                        onChange={(val) => {
+                          setSelectedState(val);
                           setSelectedCity(''); // Reset city when state changes
                         }}
-                        className="w-full px-4 py-2 bg-slate-800/50 border border-white/10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-teal-500/50 [&>option]:bg-slate-800 transition-all"
-                      >
-                        <option value="">Select State</option>
-                        {Object.keys(locationData).map(state => (
-                          <option key={state} value={state}>{state}</option>
-                        ))}
-                      </select>
+                        options={Object.keys(locationData)}
+                        placeholder="Select State"
+                      />
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-slate-300 mb-1">City</label>
-                      <select
-                        required
+                      <CustomDropdown
                         value={selectedCity}
-                        onChange={(e) => setSelectedCity(e.target.value)}
+                        onChange={setSelectedCity}
                         disabled={!selectedState}
-                        className="w-full px-4 py-2 bg-slate-800/50 border border-white/10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-teal-500/50 [&>option]:bg-slate-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        <option value="">{selectedState ? "Select City" : "Select a State first"}</option>
-                        {selectedState && locationData[selectedState].map(city => (
-                          <option key={city} value={city}>{city}</option>
-                        ))}
-                      </select>
+                        options={selectedState ? locationData[selectedState] : []}
+                        placeholder={selectedState ? "Select City" : "Select a State first"}
+                      />
                     </div>
                   </div>
                 </>
