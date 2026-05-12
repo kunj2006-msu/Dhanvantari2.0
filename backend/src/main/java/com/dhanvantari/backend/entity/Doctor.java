@@ -11,8 +11,8 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@ToString(exclude = {"user", "city", "specialization"})
-@EqualsAndHashCode(exclude = {"user", "city", "specialization"})
+@ToString(exclude = {"user"})
+@EqualsAndHashCode(exclude = {"user"})
 public class Doctor {
 
     @Id
@@ -23,16 +23,20 @@ public class Doctor {
     @JoinColumn(name = "id")
     private User user;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "city_id", nullable = false)
-    private City city;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "specialization_id", nullable = false)
-    private Specialization specialization;
-
     @Column(name = "full_name", nullable = false)
     private String fullName;
+
+    @Column(name = "degree")
+    private String degree;
+
+    @Column(name = "specialization")
+    private String specialization;
+
+    @Column(name = "city")
+    private String city;
+
+    @Column(name = "state")
+    private String state;
 
     @Column(name = "registration_number", nullable = false, unique = true, length = 100)
     private String registrationNumber;
@@ -42,4 +46,10 @@ public class Doctor {
 
     @Column(name = "clinic_address", columnDefinition = "TEXT")
     private String clinicAddress;
+
+    @Column(name = "latitude")
+    private Double latitude;
+
+    @Column(name = "longitude")
+    private Double longitude;
 }

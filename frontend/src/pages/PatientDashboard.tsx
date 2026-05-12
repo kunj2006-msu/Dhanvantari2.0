@@ -627,6 +627,7 @@ export default function PatientDashboard() {
   const [isHistoryOpen, setIsHistoryOpen] = useState(true);
   const [language, setLanguage] = useState('English');
   const navigate = useNavigate();
+  const userName = localStorage.getItem('userName') || 'Patient';
 
   const handleLogout = () => {
     authService.logout();
@@ -703,7 +704,7 @@ export default function PatientDashboard() {
                   exit={{ opacity: 0, height: 0 }}
                   className="flex flex-col items-center overflow-hidden whitespace-nowrap"
                 >
-                  <h2 className="text-lg font-semibold text-slate-200">John Doe</h2>
+                  <h2 className="text-lg font-semibold text-slate-200">{userName}</h2>
                   <span className="text-xs text-slate-500 mt-1">Patient</span>
                 </motion.div>
               )}

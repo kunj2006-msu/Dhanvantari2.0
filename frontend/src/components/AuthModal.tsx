@@ -1,9 +1,12 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, AlertCircle } from 'lucide-react';
+import { X, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { authService } from '../services/authService';
 import { CustomDropdown } from './CustomDropdown';
+import { CustomDatePicker } from './CustomDatePicker';
+import MapModal from './MapModal';
+import { MapPin, CheckCircle2 } from 'lucide-react';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -23,6 +26,9 @@ export default function AuthModal({ isOpen, onClose, initialUserType }: AuthModa
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [isMapOpen, setIsMapOpen] = useState(false);
+  const [locationCoords, setLocationCoords] = useState<{lat: number, lng: number} | null>(null);
 
   // Form Data State
   const [email, setEmail] = useState('');
@@ -31,10 +37,14 @@ export default function AuthModal({ isOpen, onClose, initialUserType }: AuthModa
   const [dob, setDob] = useState('');
   const [age, setAge] = useState('');
   const [gender, setGender] = useState('');
+  const [bloodGroup, setBloodGroup] = useState('');
   const [selectedState, setSelectedState] = useState('');
   const [selectedCity, setSelectedCity] = useState('');
   const [degree, setDegree] = useState('');
   const [specialization, setSpecialization] = useState('');
+  const [registrationNumber, setRegistrationNumber] = useState('');
+  const [experienceYears, setExperienceYears] = useState('');
+  const [clinicAddress, setClinicAddress] = useState('');
   const [preMedicalConditions, setPreMedicalConditions] = useState<string[]>([]);
   const [otherCondition, setOtherCondition] = useState('');
 
@@ -47,30 +57,48 @@ export default function AuthModal({ isOpen, onClose, initialUserType }: AuthModa
       setSuccessMessage('');
       setEmail('');
       setPassword('');
+      setShowPassword(false);
       setName('');
       setDob('');
       setAge('');
       setGender('');
+      setBloodGroup('');
       setSelectedState('');
       setSelectedCity('');
       setDegree('');
       setSpecialization('');
+      setRegistrationNumber('');
+      setExperienceYears('');
+      setClinicAddress('');
       setPreMedicalConditions([]);
       setOtherCondition('');
+      setIsMapOpen(false);
+      setLocationCoords(null);
     }
   }, [isOpen, isLogin, initialUserType]);
 
   // Auto-calculate age
   useEffect(() => {
     if (dob) {
-      const birthDate = new Date(dob);
-      const today = new Date();
-      let calculatedAge = today.getFullYear() - birthDate.getFullYear();
-      const m = today.getMonth() - birthDate.getMonth();
-      if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
-        calculatedAge--;
+      let birthDate;
+      const parts = dob.split('-');
+      if (parts[0].length === 4) {
+        birthDate = new Date(dob);
+      } else if (parts.length === 3) {
+        birthDate = new Date(Number(parts[2]), Number(parts[1]) - 1, Number(parts[0]));
+      } else {
+        birthDate = new Date(dob);
       }
-      setAge(calculatedAge.toString());
+      
+      if (!isNaN(birthDate.getTime())) {
+        const today = new Date();
+        let calculatedAge = today.getFullYear() - birthDate.getFullYear();
+        const m = today.getMonth() - birthDate.getMonth();
+        if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+          calculatedAge--;
+        }
+        setAge(calculatedAge.toString());
+      }
     } else {
       setAge('');
     }
@@ -102,7 +130,26 @@ export default function AuthModal({ isOpen, onClose, initialUserType }: AuthModa
     try {
       if (isLogin) {
         // --- REAL LOGIN LOGIC ---
-        await authService.login({ email, password });
+        const response = await authService.login({ email, password });
+        
+        // NOTE: The Spring Boot backend AuthController now returns { token, name, role } in the response.
+        const userRole = response?.role;
+        const expectedRole = "ROLE_" + initialUserType.toUpperCase();
+        
+        if (userRole && userRole !== expectedRole) {
+          authService.logout(); // Clear the token that was just saved
+          setErrorMessage(`Access Denied: Please use the ${userRole === 'ROLE_DOCTOR' ? 'Doctor' : 'Patient'} Login portal.`);
+          setIsLoading(false);
+          return;
+        }
+
+        const userName = response?.name || (initialUserType === 'patient' ? 'Patient' : 'Doctor');
+        localStorage.setItem('userName', userName);
+        
+        if (initialUserType === 'doctor') {
+          localStorage.setItem('userSpecialization', response?.specialization || 'Specialist');
+        }
+
         onClose();
         navigate(`/${initialUserType}`);
       } else {
@@ -120,17 +167,23 @@ export default function AuthModal({ isOpen, onClose, initialUserType }: AuthModa
           password,
           // Patient specific
           ...(initialUserType === 'patient' && {
-            dob,
+            dateOfBirth: dob.includes('-') && dob.split('-')[0].length === 2 ? dob.split('-').reverse().join('-') : dob,
             age: parseInt(age),
             gender,
+            bloodGroup,
             preMedicalConditions: finalConditions.join(', ')
           }),
           // Doctor specific
           ...(initialUserType === 'doctor' && {
             degree,
             specialization,
+            registrationNumber,
+            experienceYears: experienceYears ? parseInt(experienceYears) : undefined,
+            clinicAddress,
             state: selectedState,
-            city: selectedCity
+            city: selectedCity,
+            latitude: locationCoords?.lat,
+            longitude: locationCoords?.lng
           })
         };
 
@@ -213,14 +266,23 @@ export default function AuthModal({ isOpen, onClose, initialUserType }: AuthModa
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-slate-300 mb-1">Password</label>
-                    <input
-                      required
-                      type="password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      className="w-full px-4 py-2 bg-slate-800/50 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-500/50 transition-all"
-                      placeholder="••••••••"
-                    />
+                    <div className="relative">
+                      <input
+                        required
+                        type={showPassword ? "text" : "password"}
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        className="w-full px-4 py-2 pr-10 bg-slate-800/50 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-500/50 transition-all cursor-text"
+                        placeholder="••••••••"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 transition-colors cursor-none"
+                      >
+                        {showPassword ? <EyeOff className="w-5 h-5 cursor-none" /> : <Eye className="w-5 h-5 cursor-none" />}
+                      </button>
+                    </div>
                   </div>
                 </>
               )}
@@ -238,30 +300,59 @@ export default function AuthModal({ isOpen, onClose, initialUserType }: AuthModa
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-slate-300 mb-1">Password</label>
-                    <input required type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full px-4 py-2 bg-slate-800/50 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-500/50 transition-all" placeholder="••••••••" />
+                    <div className="relative">
+                      <input required type={showPassword ? "text" : "password"} value={password} onChange={(e) => setPassword(e.target.value)} className="w-full px-4 py-2 pr-10 bg-slate-800/50 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-500/50 transition-all cursor-text" placeholder="••••••••" />
+                      <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 transition-colors cursor-none">
+                        {showPassword ? <EyeOff className="w-5 h-5 cursor-none" /> : <Eye className="w-5 h-5 cursor-none" />}
+                      </button>
+                    </div>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-slate-300 mb-1">Date of Birth</label>
-                      <input required type="date" value={dob} onChange={(e) => setDob(e.target.value)} className="w-full px-4 py-2 bg-slate-800/50 border border-white/10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-teal-500/50 [color-scheme:dark] transition-all" />
+                      <CustomDatePicker
+                        value={dob}
+                        onChange={setDob}
+                        placeholder="Select Date"
+                      />
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-slate-300 mb-1">Age</label>
                       <input type="text" value={age} readOnly className="w-full px-4 py-2 bg-slate-800/30 border border-white/5 rounded-xl text-slate-400 cursor-not-allowed transition-all" placeholder="Auto-calc" />
                     </div>
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-1">Gender</label>
-                    <CustomDropdown
-                      value={gender}
-                      onChange={setGender}
-                      options={[
-                        { value: 'male', label: 'Male' },
-                        { value: 'female', label: 'Female' },
-                        { value: 'other', label: 'Other' }
-                      ]}
-                      placeholder="Select Gender"
-                    />
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-slate-300 mb-1">Gender</label>
+                      <CustomDropdown
+                        value={gender}
+                        onChange={setGender}
+                        options={[
+                          { value: 'male', label: 'Male' },
+                          { value: 'female', label: 'Female' },
+                          { value: 'other', label: 'Other' }
+                        ]}
+                        placeholder="Select Gender"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-slate-300 mb-1">Blood Group</label>
+                      <CustomDropdown
+                        value={bloodGroup}
+                        onChange={setBloodGroup}
+                        options={[
+                          { value: 'A+', label: 'A+' },
+                          { value: 'A-', label: 'A-' },
+                          { value: 'B+', label: 'B+' },
+                          { value: 'B-', label: 'B-' },
+                          { value: 'AB+', label: 'AB+' },
+                          { value: 'AB-', label: 'AB-' },
+                          { value: 'O+', label: 'O+' },
+                          { value: 'O-', label: 'O-' }
+                        ]}
+                        placeholder="Blood Group"
+                      />
+                    </div>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-slate-300 mb-2">Pre-medical Conditions</label>
@@ -308,7 +399,12 @@ export default function AuthModal({ isOpen, onClose, initialUserType }: AuthModa
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-slate-300 mb-1">Password</label>
-                    <input required type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full px-4 py-2 bg-slate-800/50 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-500/50 transition-all" placeholder="••••••••" />
+                    <div className="relative">
+                      <input required type={showPassword ? "text" : "password"} value={password} onChange={(e) => setPassword(e.target.value)} className="w-full px-4 py-2 pr-10 bg-slate-800/50 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-500/50 transition-all cursor-text" placeholder="••••••••" />
+                      <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 transition-colors cursor-none">
+                        {showPassword ? <EyeOff className="w-5 h-5 cursor-none" /> : <Eye className="w-5 h-5 cursor-none" />}
+                      </button>
+                    </div>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-slate-300 mb-1">Degree</label>
@@ -316,7 +412,20 @@ export default function AuthModal({ isOpen, onClose, initialUserType }: AuthModa
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-slate-300 mb-1">Specialization</label>
-                    <input required type="text" value={specialization} onChange={(e) => setSpecialization(e.target.value)} className="w-full px-4 py-2 bg-slate-800/50 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-500/50 transition-all" placeholder="Cardiologist" />
+                    <CustomDropdown
+                      value={specialization}
+                      onChange={setSpecialization}
+                      options={['General Physician', 'Cardiologist', 'Dermatologist', 'Pediatrician', 'Neurologist', 'Orthopedic', 'Psychiatrist']}
+                      placeholder="Select Specialization"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-300 mb-1">Medical Registration Number</label>
+                    <input required type="text" value={registrationNumber} onChange={(e) => setRegistrationNumber(e.target.value)} className="w-full px-4 py-2 bg-slate-800/50 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-500/50 transition-all cursor-none" placeholder="MCI-12345" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-300 mb-1">Years of Experience</label>
+                    <input required type="number" min="0" value={experienceYears} onChange={(e) => setExperienceYears(e.target.value)} className="w-full px-4 py-2 bg-slate-800/50 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-500/50 transition-all cursor-none" placeholder="5" />
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
@@ -341,6 +450,32 @@ export default function AuthModal({ isOpen, onClose, initialUserType }: AuthModa
                         placeholder={selectedState ? "Select City" : "Select a State first"}
                       />
                     </div>
+                  </div>
+                  <div>
+                    <button
+                      type="button"
+                      disabled={!selectedState || !selectedCity}
+                      onClick={() => setIsMapOpen(true)}
+                      className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl border border-white/10 transition-all cursor-none ${
+                        !selectedState || !selectedCity
+                          ? 'bg-slate-800/50 text-slate-500 cursor-not-allowed'
+                          : locationCoords
+                          ? 'bg-teal-500/10 text-teal-400 border-teal-500/50'
+                          : 'bg-slate-800 hover:bg-slate-700 text-slate-200'
+                      }`}
+                    >
+                      {locationCoords ? (
+                        <>
+                          <CheckCircle2 className="w-5 h-5 cursor-none" />
+                          Location Selected ({locationCoords.lat.toFixed(4)}, {locationCoords.lng.toFixed(4)})
+                        </>
+                      ) : (
+                        <>
+                          <MapPin className="w-5 h-5 cursor-none" />
+                          📍 Select Address on Map
+                        </>
+                      )}
+                    </button>
                   </div>
                 </>
               )}
@@ -376,6 +511,17 @@ export default function AuthModal({ isOpen, onClose, initialUserType }: AuthModa
           </div>
         </motion.div>
       </div>
+      <MapModal 
+        isOpen={isMapOpen} 
+        onClose={() => setIsMapOpen(false)} 
+        onConfirm={(lat, lng, address) => {
+          setLocationCoords({ lat, lng });
+          setClinicAddress(address);
+          setIsMapOpen(false);
+        }} 
+        city={selectedCity}
+        state={selectedState}
+      />
     </AnimatePresence>
   );
 }

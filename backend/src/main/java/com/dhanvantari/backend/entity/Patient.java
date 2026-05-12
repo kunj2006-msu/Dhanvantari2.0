@@ -34,6 +34,12 @@ public class Patient {
     @Column(name = "blood_group", length = 10)
     private String bloodGroup;
 
+    @Column(name = "gender", length = 20)
+    private String gender;
+
+    @Column(name = "pre_medical_conditions", columnDefinition = "TEXT")
+    private String preMedicalConditions;
+
     @Column(name = "height_cm", precision = 5, scale = 2)
     private BigDecimal heightCm;
 

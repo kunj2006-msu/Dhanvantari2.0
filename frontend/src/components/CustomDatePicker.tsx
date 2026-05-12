@@ -2,6 +2,14 @@ import { useState, useRef, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 
+const months = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December"
+];
+
+const currentYear = new Date().getFullYear();
+const years = Array.from({ length: currentYear - 1900 + 1 }, (_, i) => currentYear - i);
+
 interface CustomDatePickerProps {
   value: string;
   onChange: (date: string) => void;
@@ -64,6 +72,14 @@ export const CustomDatePicker = ({ value, onChange, minDate, placeholder = "Sele
     setIsOpen(false);
   };
 
+  const handleMonthChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setCurrentMonth(new Date(currentMonth.getFullYear(), Number(e.target.value), 1));
+  };
+
+  const handleYearChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setCurrentMonth(new Date(Number(e.target.value), currentMonth.getMonth(), 1));
+  };
+
   const year = currentMonth.getFullYear();
   const month = currentMonth.getMonth();
   const daysInMonth = getDaysInMonth(year, month);
@@ -123,8 +139,25 @@ export const CustomDatePicker = ({ value, onChange, minDate, placeholder = "Sele
               >
                 <ChevronLeft className="w-5 h-5 cursor-none" />
               </button>
-              <div className="font-bold text-slate-200 cursor-none">
-                {currentMonth.toLocaleString('default', { month: 'long', year: 'numeric' })}
+              <div className="flex gap-2 font-bold text-slate-200 cursor-none">
+                <select 
+                  value={currentMonth.getMonth()} 
+                  onChange={handleMonthChange}
+                  className="bg-transparent border border-white/10 rounded-lg px-2 py-1 text-sm outline-none focus:ring-1 focus:ring-teal-500/50 cursor-none hover:bg-slate-800/50 transition-colors"
+                >
+                  {months.map((m, i) => (
+                    <option key={m} value={i} className="bg-slate-800 text-slate-200">{m}</option>
+                  ))}
+                </select>
+                <select 
+                  value={currentMonth.getFullYear()} 
+                  onChange={handleYearChange}
+                  className="bg-transparent border border-white/10 rounded-lg px-2 py-1 text-sm outline-none focus:ring-1 focus:ring-teal-500/50 cursor-none hover:bg-slate-800/50 transition-colors"
+                >
+                  {years.map(y => (
+                    <option key={y} value={y} className="bg-slate-800 text-slate-200">{y}</option>
+                  ))}
+                </select>
               </div>
               <button 
                 onClick={handleNextMonth}

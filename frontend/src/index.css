@@ -2,6 +2,12 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Custom scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #0f766e; border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: #2dd4bf; }
+
 /* Custom globals */
 * {
   cursor: none !important;
