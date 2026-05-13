@@ -16,7 +16,14 @@ export const authService = {
         if (!response.ok) {
             // If backend throws a 401 Unauthorized or 403 Forbidden
             const errorText = await response.text();
-            throw new Error(errorText || 'Invalid email or password');
+            let errorMessage = 'Authentication failed';
+            try {
+                const errorObj = JSON.parse(errorText);
+                errorMessage = errorObj.message || errorObj.error || errorMessage;
+            } catch (e) {
+                errorMessage = errorText;
+            }
+            throw new Error(`${response.status}: ${errorMessage}`);
         }
 
         const data = await response.json();
@@ -56,5 +63,25 @@ export const authService = {
     // 4. Get the token for future API calls (like sending AI chats)
     getToken() {
         return localStorage.getItem('dhanvantari_token');
+    },
+
+    // 5. Fetch the full user profile
+    async getProfile() {
+        const token = this.getToken();
+        if (!token) throw new Error('No token found');
+
+        const response = await fetch('http://localhost:8080/api/users/me', {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to fetch profile');
+        }
+
+        return await response.json();
     }
 };

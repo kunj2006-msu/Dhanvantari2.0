@@ -4,8 +4,9 @@ import { useNavigate } from 'react-router-dom';
 import { authService } from '../services/authService';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CustomDropdown } from '../components/CustomDropdown';
+import Profile from '../components/profile/Profile';
 
-type ViewState = 'schedule' | 'patients' | 'settings';
+type ViewState = 'schedule' | 'patients' | 'settings' | 'see-profile';
 
 interface Appointment {
   id: number;
@@ -303,12 +304,13 @@ export default function DoctorDashboard() {
               isNavOpen={isNavOpen} 
             />
             <NavItem 
-              icon={Settings} 
-              label="Settings" 
-              active={activeView === 'settings'} 
-              onClick={() => setActiveView('settings')} 
+              icon={User} 
+              label="See Profile" 
+              active={activeView === 'see-profile'} 
+              onClick={() => setActiveView('see-profile')} 
               isNavOpen={isNavOpen} 
             />
+
           </div>
 
           <div className="p-4 border-t border-white/5 cursor-none">
@@ -341,11 +343,7 @@ export default function DoctorDashboard() {
                     Patient Records View (Under Construction)
                   </div>
                 )}
-                {activeView === 'settings' && (
-                  <div className="flex-1 flex items-center justify-center text-slate-400 cursor-none">
-                    Settings View (Under Construction)
-                  </div>
-                )}
+                {activeView === 'see-profile' && <Profile />}
               </motion.div>
             </AnimatePresence>
           </div>

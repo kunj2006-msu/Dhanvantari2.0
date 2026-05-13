@@ -122,4 +122,49 @@ public class AuthService {
                 .specialization(specialization)
                 .build();
     }
+
+    public java.util.Map<String, Object> getMe() {
+        String email = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
+        
+        java.util.Map<String, Object> response = new java.util.HashMap<>();
+        response.put("id", user.getId());
+        response.put("email", user.getEmail());
+        response.put("role", user.getRole().name());
+        
+        if (user.getRole() == com.dhanvantari.backend.entity.UserRole.ROLE_DOCTOR) {
+            com.dhanvantari.backend.entity.Doctor doctor = doctorRepository.findById(user.getId()).orElse(null);
+            if (doctor != null) {
+                response.put("fullName", doctor.getFullName());
+                response.put("degree", doctor.getDegree());
+                response.put("specialization", doctor.getSpecialization());
+                response.put("city", doctor.getCity());
+                response.put("state", doctor.getState());
+                response.put("medicalRegistrationNumber", doctor.getRegistrationNumber());
+                response.put("yearsOfExperience", doctor.getExperienceYears());
+                response.put("clinicAddress", doctor.getClinicAddress());
+                response.put("latitude", doctor.getLatitude());
+                response.put("longitude", doctor.getLongitude());
+            }
+        } else if (user.getRole() == com.dhanvantari.backend.entity.UserRole.ROLE_PATIENT) {
+            com.dhanvantari.backend.entity.Patient patient = patientRepository.findById(user.getId()).orElse(null);
+            if (patient != null) {
+                response.put("fullName", patient.getFullName());
+                response.put("dateOfBirth", patient.getDateOfBirth() != null ? patient.getDateOfBirth().toString() : null);
+                response.put("gender", patient.getGender());
+                response.put("bloodGroup", patient.getBloodGroup());
+                
+                String conditions = patient.getPreMedicalConditions();
+                if (conditions != null && !conditions.trim().isEmpty()) {
+                    response.put("preMedicalConditions", java.util.Arrays.stream(conditions.split(","))
+                                                                       .map(String::trim)
+                                                                       .filter(s -> !s.isEmpty())
+                                                                       .toArray(String[]::new));
+                } else {
+                    response.put("preMedicalConditions", new String[0]);
+                }
+            }
+        }
+        return response;
+    }
 }

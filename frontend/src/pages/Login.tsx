@@ -1,21 +1,53 @@
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import Navbar from '../components/Navbar';
-import { LogIn } from 'lucide-react';
+import { LogIn, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { authService } from '../services/authService';
 
 export default function Login() {
   const navigate = useNavigate();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setIsLoading(true);
+
+    try {
+      const data = await authService.login({ email, password });
+      if (data.role === 'ROLE_DOCTOR') {
+        navigate('/doctor');
+      } else {
+        navigate('/patient');
+      }
+    } catch (err: any) {
+      const errorString = err?.response?.data?.message || err?.message || String(err);
+
+      // Sanitize Login Error Handling
+      if (err?.response?.status === 403 || err?.response?.status === 401 || errorString.includes('403') || errorString.includes('401') || errorString.toLowerCase().includes('forbidden') || errorString.toLowerCase().includes('unauthorized')) {
+        setError('Invalid email or password. If you are new here, please register first.');
+      } else {
+        setError('Unable to connect to the server. Please try again later.');
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <main className="bg-slate-900 min-h-screen flex flex-col">
       <Navbar />
-      
+
       <div className="flex-1 flex items-center justify-center p-4 relative overflow-hidden">
         {/* Ambient background glows */}
         <div className="absolute top-[20%] left-[20%] w-[40%] h-[40%] rounded-full bg-teal-500/10 blur-3xl" />
         <div className="absolute bottom-[20%] right-[20%] w-[40%] h-[40%] rounded-full bg-cyan-600/10 blur-3xl" />
 
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
@@ -29,21 +61,31 @@ export default function Login() {
             <p className="text-slate-300 font-light">Sign in to your Dhanvantari account</p>
           </div>
 
-          <form className="space-y-6" onSubmit={(e) => { e.preventDefault(); navigate('/patient'); }}>
+          {error && (
+            <div className="mb-6 p-4 bg-red-500/10 border border-red-500/30 rounded-xl flex items-start gap-3">
+              <div className="text-red-400 text-sm">{error}</div>
+            </div>
+          )}
+
+          <form className="space-y-6" onSubmit={handleLogin}>
             <div>
               <label className="block text-sm font-medium text-slate-300 mb-2">Email Address</label>
-              <input 
-                type="email" 
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 className="w-full px-4 py-3 bg-slate-800/50 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-cyan-500 text-white placeholder-slate-500 transition-all font-light"
                 placeholder="you@example.com"
                 required
               />
             </div>
-            
+
             <div>
               <label className="block text-sm font-medium text-slate-300 mb-2">Password</label>
-              <input 
-                type="password" 
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 className="w-full px-4 py-3 bg-slate-800/50 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-cyan-500 text-white placeholder-slate-500 transition-all font-light"
                 placeholder="••••••••"
                 required
@@ -62,9 +104,10 @@ export default function Login() {
               whileHover={{ scale: 1.02, boxShadow: "0 10px 15px -3px rgba(6, 182, 212, 0.3)" }}
               whileTap={{ scale: 0.98 }}
               type="submit"
-              className="w-full py-4 bg-gradient-to-r from-teal-500 to-cyan-500 text-white rounded-xl font-semibold text-lg transition-all"
+              disabled={isLoading}
+              className="w-full py-4 bg-gradient-to-r from-teal-500 to-cyan-500 text-white rounded-xl font-semibold text-lg transition-all flex justify-center items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
             >
-              Sign In
+              {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Sign In'}
             </motion.button>
           </form>
 

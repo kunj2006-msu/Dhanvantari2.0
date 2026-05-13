@@ -573,11 +573,7 @@ const AppointmentsCanvas = ({ isHistoryOpen, setIsHistoryOpen }: any) => {
   );
 };
 
-const SeeProfileCanvas = () => (
-  <div className="flex-1 flex items-center justify-center p-8 text-center h-full">
-    <div className="text-2xl font-semibold text-slate-200">See Profile Interface will go here</div>
-  </div>
-);
+import Profile from '../components/profile/Profile';
 
 const EditProfileCanvas = () => (
   <div className="flex-1 flex items-center justify-center p-8 text-center h-full">
@@ -739,13 +735,7 @@ export default function PatientDashboard() {
               onClick={() => setActiveView('see-profile')} 
               isNavOpen={isNavOpen} 
             />
-            <NavItem 
-              icon={Settings} 
-              label="Edit Profile" 
-              active={activeView === 'edit-profile'} 
-              onClick={() => setActiveView('edit-profile')} 
-              isNavOpen={isNavOpen} 
-            />
+
             <NavItem 
               icon={Trash2} 
               label="Delete Account" 
@@ -786,7 +776,7 @@ export default function PatientDashboard() {
                 {activeView === 'mental-health' && <MentalHealthCanvas isHistoryOpen={isHistoryOpen} setIsHistoryOpen={setIsHistoryOpen} />}
                 {activeView === 'triage' && <TriageCanvas isHistoryOpen={isHistoryOpen} setIsHistoryOpen={setIsHistoryOpen} />}
                 {activeView === 'appointments' && <AppointmentsCanvas isHistoryOpen={isHistoryOpen} setIsHistoryOpen={setIsHistoryOpen} />}
-                {activeView === 'see-profile' && <SeeProfileCanvas />}
+                {activeView === 'see-profile' && <Profile />}
                 {activeView === 'edit-profile' && <EditProfileCanvas />}
                 {activeView === 'delete-account' && <DeleteAccountCanvas />}
               </motion.div>
