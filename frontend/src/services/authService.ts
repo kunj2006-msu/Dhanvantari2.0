@@ -15,15 +15,9 @@ export const authService = {
 
         if (!response.ok) {
             // If backend throws a 401 Unauthorized or 403 Forbidden
-            const errorText = await response.text();
-            let errorMessage = 'Authentication failed';
-            try {
-                const errorObj = JSON.parse(errorText);
-                errorMessage = errorObj.message || errorObj.error || errorMessage;
-            } catch (e) {
-                errorMessage = errorText;
-            }
-            throw new Error(`${response.status}: ${errorMessage}`);
+            const error: any = new Error('Invalid email or password. If you are new here, please register first.');
+            error.response = response;
+            throw error;
         }
 
         const data = await response.json();
@@ -81,6 +75,50 @@ export const authService = {
         if (!response.ok) {
             throw new Error('Failed to fetch profile');
         }
+
+        return await response.json();
+    },
+
+    // 6. Update user profile
+    async updateProfile(updatedData: any) {
+        const token = this.getToken();
+        if (!token) throw new Error('No token found');
+
+        const response = await fetch('http://localhost:8080/api/users/me', {
+            method: 'PUT',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(updatedData)
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to update profile');
+        }
+
+        return await response.json();
+    },
+
+    // 7. Delete user account
+    async deleteAccount() {
+        const token = this.getToken();
+        if (!token) throw new Error('No token found');
+
+        const response = await fetch('http://localhost:8080/api/users/me', {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to delete account');
+        }
+
+        // Clear session after successful deletion
+        this.logout();
 
         return await response.json();
     }

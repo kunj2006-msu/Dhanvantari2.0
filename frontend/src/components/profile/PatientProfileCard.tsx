@@ -3,9 +3,10 @@ import { Mail, Calendar, User, Activity, Edit3, ShieldCheck } from 'lucide-react
 
 interface PatientProfileCardProps {
   data: any;
+  onEdit?: () => void;
 }
 
-export default function PatientProfileCard({ data }: PatientProfileCardProps) {
+export default function PatientProfileCard({ data, onEdit }: PatientProfileCardProps) {
   return (
     <div className="bg-slate-800/40 backdrop-blur-xl border border-white/10 rounded-3xl p-8 shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] relative overflow-hidden cursor-none">
       {/* Decorative background glow */}
@@ -86,7 +87,7 @@ export default function PatientProfileCard({ data }: PatientProfileCardProps) {
         <motion.button
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
-          onClick={() => console.log('Switch to edit mode')}
+          onClick={onEdit}
           className="flex items-center gap-2 px-6 py-2.5 bg-slate-700/50 hover:bg-slate-600/50 text-slate-200 border border-white/10 rounded-xl transition-colors shadow-lg cursor-none group"
         >
           <Edit3 className="w-4 h-4 group-hover:text-teal-400 transition-colors cursor-none" />

@@ -14,9 +14,10 @@ L.Icon.Default.mergeOptions({
 
 interface DoctorProfileCardProps {
   data: any;
+  onEdit?: () => void;
 }
 
-export default function DoctorProfileCard({ data }: DoctorProfileCardProps) {
+export default function DoctorProfileCard({ data, onEdit }: DoctorProfileCardProps) {
   const hasCoordinates = data.latitude && data.longitude;
   const mapLink = hasCoordinates ? `https://www.google.com/maps/search/?api=1&query=${data.latitude},${data.longitude}` : "#";
 
@@ -121,7 +122,7 @@ export default function DoctorProfileCard({ data }: DoctorProfileCardProps) {
         <motion.button
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
-          onClick={() => console.log('Switch to edit mode')}
+          onClick={onEdit}
           className="flex items-center gap-2 px-6 py-2.5 bg-slate-700/50 hover:bg-slate-600/50 text-slate-200 border border-white/10 rounded-xl transition-colors shadow-lg cursor-none group"
         >
           <Edit3 className="w-4 h-4 group-hover:text-cyan-400 transition-colors cursor-none" />

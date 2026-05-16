@@ -32,7 +32,18 @@ public class AuthService {
     @Transactional
     public AuthResponse register(RegisterRequest request) {
         if (userRepository.findByEmail(request.getEmail()).isPresent()) {
-            throw new RuntimeException("Email is already taken!");
+            throw new IllegalArgumentException("Email is already in use.");
+        }
+
+        if (request.getRole() == com.dhanvantari.backend.entity.UserRole.ROLE_PATIENT) {
+            if (request.getDateOfBirth() == null || request.getGender() == null || request.getBloodGroup() == null) {
+                throw new IllegalArgumentException("Missing mandatory patient details");
+            }
+        } else if (request.getRole() == com.dhanvantari.backend.entity.UserRole.ROLE_DOCTOR) {
+            boolean hasAddress = request.getClinicAddress() != null || (request.getCity() != null && request.getState() != null);
+            if (!hasAddress || request.getLatitude() == null || request.getLongitude() == null) {
+                throw new IllegalArgumentException("Missing mandatory clinic address details");
+            }
         }
 
         User user = User.builder()
@@ -167,4 +178,85 @@ public class AuthService {
         }
         return response;
     }
+
+    @Transactional
+    public void updateMe(java.util.Map<String, Object> updates) {
+        String email = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
+        
+        if (updates.containsKey("fullName") && updates.get("fullName") != null) {
+            user.setName((String) updates.get("fullName"));
+            userRepository.save(user);
+        }
+
+        if (user.getRole() == com.dhanvantari.backend.entity.UserRole.ROLE_DOCTOR) {
+            com.dhanvantari.backend.entity.Doctor doctor = doctorRepository.findById(user.getId())
+                    .orElseThrow(() -> new RuntimeException("Doctor profile not found"));
+            
+            if (updates.containsKey("fullName") && updates.get("fullName") != null) doctor.setFullName((String) updates.get("fullName"));
+            if (updates.containsKey("degree")) doctor.setDegree(updates.get("degree") != null ? (String) updates.get("degree") : null);
+            if (updates.containsKey("specialization")) doctor.setSpecialization(updates.get("specialization") != null ? (String) updates.get("specialization") : null);
+            if (updates.containsKey("experienceYears") && updates.get("experienceYears") != null) {
+                Object exp = updates.get("experienceYears");
+                if (exp instanceof Integer) doctor.setExperienceYears((Integer) exp);
+                else if (exp instanceof String && !((String) exp).isEmpty()) doctor.setExperienceYears(Integer.parseInt((String) exp));
+            }
+            if (updates.containsKey("clinicAddress")) doctor.setClinicAddress(updates.get("clinicAddress") != null ? (String) updates.get("clinicAddress") : null);
+            if (updates.containsKey("latitude") && updates.get("latitude") != null) {
+                Object lat = updates.get("latitude");
+                if (lat instanceof Double) doctor.setLatitude((Double) lat);
+                else if (lat instanceof Number) doctor.setLatitude(((Number) lat).doubleValue());
+                else if (lat instanceof String) doctor.setLatitude(Double.parseDouble((String) lat));
+            }
+            if (updates.containsKey("longitude") && updates.get("longitude") != null) {
+                Object lng = updates.get("longitude");
+                if (lng instanceof Double) doctor.setLongitude((Double) lng);
+                else if (lng instanceof Number) doctor.setLongitude(((Number) lng).doubleValue());
+                else if (lng instanceof String) doctor.setLongitude(Double.parseDouble((String) lng));
+            }
+            
+            doctorRepository.save(doctor);
+            
+        } else if (user.getRole() == com.dhanvantari.backend.entity.UserRole.ROLE_PATIENT) {
+            com.dhanvantari.backend.entity.Patient patient = patientRepository.findById(user.getId())
+                    .orElseThrow(() -> new RuntimeException("Patient profile not found"));
+            
+            if (updates.containsKey("fullName") && updates.get("fullName") != null) patient.setFullName((String) updates.get("fullName"));
+            if (updates.containsKey("dateOfBirth") && updates.get("dateOfBirth") != null) {
+                Object dob = updates.get("dateOfBirth");
+                if (dob instanceof String && !((String) dob).isEmpty()) {
+                    patient.setDateOfBirth(java.time.LocalDate.parse((String) dob));
+                }
+            }
+            if (updates.containsKey("gender")) patient.setGender(updates.get("gender") != null ? (String) updates.get("gender") : null);
+            if (updates.containsKey("bloodGroup")) patient.setBloodGroup(updates.get("bloodGroup") != null ? (String) updates.get("bloodGroup") : null);
+            if (updates.containsKey("preMedicalConditions") && updates.get("preMedicalConditions") != null) {
+                Object cond = updates.get("preMedicalConditions");
+                if (cond instanceof java.util.List) {
+                    java.util.List<?> list = (java.util.List<?>) cond;
+                    patient.setPreMedicalConditions(String.join(", ", list.stream().map(Object::toString).toArray(String[]::new)));
+                } else if (cond instanceof String) {
+                    patient.setPreMedicalConditions((String) cond);
+                }
+            } else if (updates.containsKey("preMedicalConditions") && updates.get("preMedicalConditions") == null) {
+                patient.setPreMedicalConditions(null);
+            }
+            
+            patientRepository.save(patient);
+        }
+    }
+
+    @Transactional
+    public void deleteMe() {
+        String email = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
+        
+        if (user.getRole() == com.dhanvantari.backend.entity.UserRole.ROLE_DOCTOR) {
+            doctorRepository.deleteById(user.getId());
+        } else if (user.getRole() == com.dhanvantari.backend.entity.UserRole.ROLE_PATIENT) {
+            patientRepository.deleteById(user.getId());
+        }
+        userRepository.delete(user);
+    }
 }
+

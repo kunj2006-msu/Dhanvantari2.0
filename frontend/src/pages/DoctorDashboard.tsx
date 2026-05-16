@@ -1,4 +1,4 @@
-import { Calendar, Users, Settings, LogOut, Stethoscope, Menu, Globe, Clock, User, FileText, Send } from 'lucide-react';
+import { Calendar, Users, Settings, LogOut, Stethoscope, Menu, Globe, Clock, User, FileText, Send, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authService } from '../services/authService';
@@ -200,6 +200,7 @@ export default function DoctorDashboard() {
   const [activeView, setActiveView] = useState<ViewState>('schedule');
   const [isNavOpen, setIsNavOpen] = useState(true);
   const [isHistoryOpen, setIsHistoryOpen] = useState(true); 
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [language, setLanguage] = useState('English');
   const navigate = useNavigate();
   const userName = localStorage.getItem('userName') || 'Doctor';
@@ -310,7 +311,14 @@ export default function DoctorDashboard() {
               onClick={() => setActiveView('see-profile')} 
               isNavOpen={isNavOpen} 
             />
-
+            <NavItem 
+              icon={Trash2} 
+              label="Delete Account" 
+              active={showDeleteModal} 
+              onClick={() => setShowDeleteModal(true)} 
+              isNavOpen={isNavOpen} 
+              isDanger={true}
+            />
           </div>
 
           <div className="p-4 border-t border-white/5 cursor-none">
@@ -349,6 +357,55 @@ export default function DoctorDashboard() {
           </div>
         </main>
       </div>
+
+      {/* Delete Account Modal */}
+      <AnimatePresence>
+        {showDeleteModal && (
+          <div 
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center cursor-none"
+            onClick={() => setShowDeleteModal(false)}
+          >
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-slate-800/80 border border-white/10 rounded-2xl p-6 max-w-md w-full mx-4 shadow-2xl cursor-none text-center"
+            >
+              <div className="w-12 h-12 rounded-full bg-red-500/20 flex items-center justify-center mx-auto mb-4 border border-red-500/30">
+                <Trash2 className="w-6 h-6 text-red-500" />
+              </div>
+              <h2 className="text-xl font-bold text-slate-100 mb-2 cursor-none">Delete Account?</h2>
+              <p className="text-slate-400 text-sm mb-6 cursor-none">
+                Are you absolutely sure you want to permanently delete your account? All your medical records and history will be lost. This action cannot be undone.
+              </p>
+              
+              <div className="flex gap-4 cursor-none">
+                <button 
+                  onClick={() => setShowDeleteModal(false)}
+                  className="flex-1 px-4 py-2 bg-slate-700/50 hover:bg-slate-700 text-slate-200 rounded-xl transition-colors font-medium border border-white/5 cursor-none"
+                >
+                  Cancel
+                </button>
+                <button 
+                  onClick={async () => {
+                    try {
+                      await authService.deleteAccount();
+                      navigate('/');
+                    } catch (err) {
+                      console.error("Failed to delete account", err);
+                      alert("Failed to delete account");
+                    }
+                  }}
+                  className="flex-1 px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 hover:border-red-500/50 rounded-xl transition-all font-medium shadow-[0_0_15px_rgba(239,68,68,0.2)] hover:shadow-[0_0_20px_rgba(239,68,68,0.4)] cursor-none"
+                >
+                  Delete Permanently
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

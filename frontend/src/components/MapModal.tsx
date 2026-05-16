@@ -24,6 +24,8 @@ interface MapModalProps {
   onConfirm: (lat: number, lng: number, address: string) => void;
   city?: string;
   state?: string;
+  initialLat?: number | null;
+  initialLng?: number | null;
 }
 
 function MapController({ center, bounds }: { center: [number, number], bounds: L.LatLngBoundsExpression | null }) {
@@ -74,7 +76,7 @@ function LocationMarker({
   );
 }
 
-export default function MapModal({ isOpen, onClose, onConfirm, city, state }: MapModalProps) {
+export default function MapModal({ isOpen, onClose, onConfirm, city, state, initialLat, initialLng }: MapModalProps) {
   const [position, setPosition] = useState<L.LatLng | null>(null);
   const [address, setAddress] = useState<string>('');
   const [isFetchingLocation, setIsFetchingLocation] = useState(false);
@@ -82,32 +84,42 @@ export default function MapModal({ isOpen, onClose, onConfirm, city, state }: Ma
   const [mapBounds, setMapBounds] = useState<L.LatLngBoundsExpression | null>(null);
 
   useEffect(() => {
-    if (isOpen && city && state) {
-      const fetchCityData = async () => {
-        try {
-          const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(city)},${encodeURIComponent(state)}`);
-          const data = await res.json();
-          if (data && data.length > 0) {
-            const first = data[0];
-            const lat = parseFloat(first.lat);
-            const lon = parseFloat(first.lon);
-            setMapCenter([lat, lon]);
-            
-            if (first.boundingbox) {
-              const [minLat, maxLat, minLon, maxLon] = first.boundingbox.map(Number);
-              setMapBounds([
-                [minLat, minLon],
-                [maxLat, maxLon]
-              ]);
+    if (isOpen) {
+      if (initialLat && initialLng) {
+        setMapCenter([initialLat, initialLng]);
+        setPosition(L.latLng(initialLat, initialLng));
+        setAddress('Existing Location'); // Optional fallback
+      } else if (city && state) {
+        const fetchCityData = async () => {
+          try {
+            const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(city)},${encodeURIComponent(state)}`);
+            const data = await res.json();
+            if (data && data.length > 0) {
+              const first = data[0];
+              const lat = parseFloat(first.lat);
+              const lon = parseFloat(first.lon);
+              setMapCenter([lat, lon]);
+              
+              if (first.boundingbox) {
+                const [minLat, maxLat, minLon, maxLon] = first.boundingbox.map(Number);
+                setMapBounds([
+                  [minLat, minLon],
+                  [maxLat, maxLon]
+                ]);
+              }
             }
+          } catch (err) {
+            console.error("Failed to fetch city coordinates", err);
           }
-        } catch (err) {
-          console.error("Failed to fetch city coordinates", err);
-        }
-      };
-      fetchCityData();
+        };
+        fetchCityData();
+      }
+    } else {
+      // Reset state when closed so it fetches fresh next time it opens
+      setPosition(null);
+      setAddress('');
     }
-  }, [isOpen, city, state]);
+  }, [isOpen, city, state, initialLat, initialLng]);
 
   if (!isOpen) return null;
 

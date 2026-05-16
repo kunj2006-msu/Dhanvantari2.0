@@ -155,6 +155,21 @@ export default function AuthModal({ isOpen, onClose, initialUserType }: AuthModa
       } else {
         // --- REAL REGISTRATION LOGIC ---
 
+        // Frontend validation
+        if (initialUserType === 'patient') {
+          if (!name || !email || !password || !dob || !gender || !bloodGroup) {
+            setErrorMessage("Please fill in all mandatory medical fields.");
+            setIsLoading(false);
+            return;
+          }
+        } else if (initialUserType === 'doctor') {
+          if (!name || !email || !password || !degree || !specialization || !experienceYears || !selectedState || !selectedCity || !locationCoords) {
+            setErrorMessage("Please complete all fields and select your clinic location on the map.");
+            setIsLoading(false);
+            return;
+          }
+        }
+
         // Compile the conditions list
         const finalConditions = [...preMedicalConditions];
         if (otherCondition) finalConditions.push(otherCondition);
@@ -192,7 +207,13 @@ export default function AuthModal({ isOpen, onClose, initialUserType }: AuthModa
         setIsLogin(true); // Switch back to login view automatically
       }
     } catch (error: any) {
-      setErrorMessage(error.message || 'An unexpected error occurred.');
+      const errorString = error?.response?.data?.message || error?.message || String(error);
+      
+      if (errorString.includes("Email is already in use") || error?.response?.status === 400 || error?.response?.status === 409) {
+        setErrorMessage("An account with this email already exists. Please log in.");
+      } else {
+        setErrorMessage("Registration failed. Please check your details and try again.");
+      }
     } finally {
       setIsLoading(false);
     }

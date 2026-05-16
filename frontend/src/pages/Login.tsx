@@ -24,14 +24,14 @@ export default function Login() {
       } else {
         navigate('/patient');
       }
-    } catch (err: any) {
-      const errorString = err?.response?.data?.message || err?.message || String(err);
-
-      // Sanitize Login Error Handling
-      if (err?.response?.status === 403 || err?.response?.status === 401 || errorString.includes('403') || errorString.includes('401') || errorString.toLowerCase().includes('forbidden') || errorString.toLowerCase().includes('unauthorized')) {
-        setError('Invalid email or password. If you are new here, please register first.');
-      } else {
-        setError('Unable to connect to the server. Please try again later.');
+    } catch (error: any) {
+      // Check if the backend specifically rejected the credentials (401 or 403)
+      if (error?.response?.status === 403 || error?.response?.status === 401) {
+          setError("Invalid email or password. If you are new here, please register first.");
+      } 
+      // Else, it's a network error or server crash
+      else {
+          setError("Unable to connect to the server. Please try again later.");
       }
     } finally {
       setIsLoading(false);
