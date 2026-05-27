@@ -1,3 +1,4 @@
+import { sendTriageMessage } from '../services/api';
 import { Brain, Stethoscope, CalendarPlus, User, LogOut, LayoutDashboard, Globe, Settings, Trash2, Menu, PanelLeftClose, PanelLeftOpen, Send, MapPin } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -110,7 +111,15 @@ const FeatureCanvas = ({
   </div>
 );
 
-const ChatInterface = ({ isHistoryOpen, setIsHistoryOpen, historyTitle, disclaimer, children }: any) => {
+const ChatInterface = ({ isHistoryOpen, setIsHistoryOpen, historyTitle, disclaimer, messages, onSendMessage, isLoading }: any) => {
+  const [inputValue, setInputValue] = useState('');
+
+  const handleSend = () => {
+    if (!inputValue.trim() || isLoading) return;
+    onSendMessage(inputValue);
+    setInputValue('');
+  };
+
   return (
     <div className="flex h-full w-full">
       <AnimatePresence initial={false}>
@@ -127,8 +136,7 @@ const ChatInterface = ({ isHistoryOpen, setIsHistoryOpen, historyTitle, disclaim
             </div>
             <div className="p-4 min-w-[320px] overflow-y-auto">
               <div className="text-sm text-slate-500 flex flex-col gap-2">
-                <div className="p-3 rounded-xl bg-slate-800/30 border border-white/5 cursor-pointer hover:bg-slate-800/60 transition-colors">Placeholder item 1</div>
-                <div className="p-3 rounded-xl bg-slate-800/30 border border-white/5 cursor-pointer hover:bg-slate-800/60 transition-colors">Placeholder item 2</div>
+                <div className="p-3 rounded-xl bg-slate-800/30 border border-white/5 cursor-pointer hover:bg-slate-800/60 transition-colors">Session History placeholder</div>
               </div>
             </div>
           </motion.div>
@@ -140,7 +148,6 @@ const ChatInterface = ({ isHistoryOpen, setIsHistoryOpen, historyTitle, disclaim
           <button 
             onClick={() => setIsHistoryOpen(!isHistoryOpen)}
             className="p-2 rounded-lg bg-slate-800/80 hover:bg-slate-700 border border-white/10 text-slate-300 transition-colors backdrop-blur-md shadow-lg"
-            title={isHistoryOpen ? "Close History" : "Open History"}
           >
             {isHistoryOpen ? <PanelLeftClose className="w-5 h-5" /> : <PanelLeftOpen className="w-5 h-5" />}
           </button>
@@ -154,23 +161,47 @@ const ChatInterface = ({ isHistoryOpen, setIsHistoryOpen, historyTitle, disclaim
             )}
         </div>
 
+        {/* Dynamic Messages Rendering */}
         <div className="flex-1 overflow-y-auto p-4 md:p-8 space-y-6 flex flex-col pt-12">
-           {children}
+            {messages?.map((msg: any, idx: number) => (
+              <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                <div className={`max-w-[80%] md:max-w-[70%] p-4 rounded-2xl shadow-md ${
+                  msg.role === 'user' ? 'bg-teal-700/80 text-white rounded-br-sm' : 'bg-slate-800 text-slate-200 rounded-bl-sm'
+                }`}>
+                  <p>{msg.text}</p>
+                </div>
+              </div>
+            ))}
+            {isLoading && (
+              <div className="flex justify-start">
+                <div className="max-w-[80%] md:max-w-[70%] bg-slate-800 text-slate-400 p-4 rounded-2xl rounded-bl-sm shadow-md italic">
+                  <p>Processing medical data...</p>
+                </div>
+              </div>
+            )}
         </div>
 
+        {/* Input Area */}
         <div className="p-4 bg-slate-900/60 backdrop-blur-xl border-t border-white/5 z-10">
           <div className="max-w-4xl mx-auto flex items-end gap-2 bg-slate-800/50 border border-white/10 rounded-2xl p-2 focus-within:ring-2 focus-within:ring-teal-500/50 transition-all shadow-inner">
             <textarea 
               rows={1}
-              placeholder="Type your message..."
-              className="flex-1 bg-transparent text-slate-200 resize-none max-h-32 focus:outline-none p-2 min-h-[44px]"
-              onInput={(e) => {
-                const target = e.target as HTMLTextAreaElement;
-                target.style.height = 'auto';
-                target.style.height = `${Math.min(target.scrollHeight, 128)}px`;
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSend();
+                }
               }}
+              placeholder="Type your symptoms here..."
+              className="flex-1 bg-transparent text-slate-200 resize-none max-h-32 focus:outline-none p-2 min-h-[44px]"
             />
-            <button className="p-3 rounded-xl bg-teal-500 text-white hover:bg-teal-400 transition-colors shadow-[0_0_15px_rgba(20,184,166,0.4)] hover:shadow-[0_0_20px_rgba(20,184,166,0.6)] mb-0.5">
+            <button 
+              onClick={handleSend}
+              disabled={isLoading}
+              className="p-3 rounded-xl bg-teal-500 text-white hover:bg-teal-400 disabled:opacity-50 transition-colors shadow-[0_0_15px_rgba(20,184,166,0.4)] mb-0.5"
+            >
               <Send className="w-5 h-5" />
             </button>
           </div>
@@ -182,68 +213,28 @@ const ChatInterface = ({ isHistoryOpen, setIsHistoryOpen, historyTitle, disclaim
 
 const MentalHealthCanvas = ({ isHistoryOpen, setIsHistoryOpen }: any) => {
   const [selectedMood, setSelectedMood] = useState<string | null>(null);
+  
+  // Placeholder logic for when we build this engine
+  const [messages, setMessages] = useState<{role: string, text: string}[]>([]);
 
   if (!selectedMood) {
     return (
       <div className="flex h-full w-full relative">
-        <AnimatePresence initial={false}>
-          {isHistoryOpen && (
-            <motion.div 
-              initial={{ width: 0, opacity: 0 }}
-              animate={{ width: 320, opacity: 1 }}
-              exit={{ width: 0, opacity: 0 }}
-              transition={{ duration: 0.3 }}
-              className="border-r border-white/5 bg-slate-900/40 flex flex-col overflow-hidden shrink-0 z-20"
-            >
-              <div className="p-4 border-b border-white/5 flex items-center justify-between min-w-[320px] h-16">
-                <h3 className="font-semibold text-slate-200">Past Sessions</h3>
-              </div>
-              <div className="p-4 min-w-[320px]">
-                <div className="text-sm text-slate-500 flex flex-col gap-2">
-                  <div className="p-3 rounded-xl bg-slate-800/30 border border-white/5 cursor-pointer hover:bg-slate-800/60 transition-colors">Placeholder item 1</div>
-                </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        <div className="flex-1 flex flex-col relative min-w-0">
-          <div className="absolute top-4 left-4 z-10">
-            <button 
-              onClick={() => setIsHistoryOpen(!isHistoryOpen)}
-              className="p-2 rounded-lg bg-slate-800/80 hover:bg-slate-700 border border-white/10 text-slate-300 transition-colors backdrop-blur-md shadow-lg"
-              title={isHistoryOpen ? "Close History" : "Open History"}
-            >
-              {isHistoryOpen ? <PanelLeftClose className="w-5 h-5" /> : <PanelLeftOpen className="w-5 h-5" />}
-            </button>
-          </div>
-          <div className="flex-1 flex flex-col items-center justify-center p-8">
-            <motion.div 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="text-center"
-            >
-              <h2 className="text-3xl md:text-4xl font-bold text-slate-100 mb-8 tracking-tight">How are you feeling right now?</h2>
-              <div className="flex flex-wrap justify-center gap-4 md:gap-6">
-                {[
-                  { emoji: '😭', label: 'Terrible' },
-                  { emoji: '😔', label: 'Bad' },
-                  { emoji: '😐', label: 'Okay' },
-                  { emoji: '🙂', label: 'Good' },
-                  { emoji: '😁', label: 'Great' }
-                ].map((item) => (
-                  <motion.button
-                    key={item.label}
-                    whileHover={{ scale: 1.1, y: -5 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => setSelectedMood(item.label)}
-                    className="w-20 h-20 md:w-24 md:h-24 rounded-2xl bg-slate-800/50 border border-white/10 flex flex-col items-center justify-center gap-2 hover:bg-slate-700/50 hover:border-teal-500/50 transition-colors shadow-lg group"
-                  >
-                    <span className="text-4xl md:text-5xl group-hover:scale-110 transition-transform">{item.emoji}</span>
-                  </motion.button>
-                ))}
-              </div>
-            </motion.div>
+        <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
+          <h2 className="text-3xl font-bold text-slate-100 mb-8">How are you feeling right now?</h2>
+          <div className="flex gap-4">
+            {['Terrible', 'Bad', 'Okay', 'Good', 'Great'].map((mood) => (
+              <button
+                key={mood}
+                onClick={() => {
+                  setSelectedMood(mood);
+                  setMessages([{ role: 'ai', text: `I see you're feeling ${mood.toLowerCase()} today. I'm here to listen. What's on your mind?` }]);
+                }}
+                className="w-24 h-24 rounded-2xl bg-slate-800/50 border border-white/10 hover:border-teal-500/50 transition-colors"
+              >
+                {mood}
+              </button>
+            ))}
           </div>
         </div>
       </div>
@@ -255,39 +246,52 @@ const MentalHealthCanvas = ({ isHistoryOpen, setIsHistoryOpen }: any) => {
       isHistoryOpen={isHistoryOpen} 
       setIsHistoryOpen={setIsHistoryOpen}
       historyTitle="Past Sessions"
-    >
-      <div className="flex justify-start">
-        <div className="max-w-[80%] md:max-w-[70%] bg-slate-800 text-slate-200 p-4 rounded-2xl rounded-bl-sm shadow-md">
-          <p>Hi there. I see you're feeling {selectedMood.toLowerCase()} today. I'm here to listen. What's on your mind?</p>
-        </div>
-      </div>
-    </ChatInterface>
+      messages={messages}
+      onSendMessage={(text: string) => setMessages(prev => [...prev, { role: 'user', text }])}
+      isLoading={false}
+    />
   );
 };
 
-const TriageCanvas = ({ isHistoryOpen, setIsHistoryOpen }: any) => {
+const TriageCanvas = ({ isHistoryOpen, setIsHistoryOpen, language }: any) => {
+  const [messages, setMessages] = useState([
+    { role: 'ai', text: "Hello. I'm here to help you assess your symptoms. Please describe what you're experiencing in as much detail as possible." }
+  ]);
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Map the dropdown name to the translation API code
+  const langCodeMap: Record<string, string> = {
+    'English': 'en', 'Hindi': 'hi', 'Gujarati': 'gu', 'Marathi': 'mr',
+    'Bengali': 'bn', 'Telugu': 'te', 'Tamil': 'ta', 'Urdu': 'ur'
+  };
+
+  const handleSendMessage = async (text: string) => {
+    setMessages(prev => [...prev, { role: 'user', text }]);
+    setIsLoading(true);
+
+    try {
+      const code = langCodeMap[language] || 'en';
+      const aiResponse = await sendTriageMessage(text, code);
+      setMessages(prev => [...prev, { role: 'ai', text: aiResponse }]);
+    } catch (error) {
+      setMessages(prev => [...prev, { role: 'ai', text: "Network error connecting to the medical service." }]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <ChatInterface 
       isHistoryOpen={isHistoryOpen} 
       setIsHistoryOpen={setIsHistoryOpen}
       historyTitle="Past Triage Results"
       disclaimer="⚠️ Disclaimer: This AI provides preliminary suggestions only. For serious symptoms or emergencies, please consult a real doctor immediately."
-    >
-      <div className="flex justify-start">
-        <div className="max-w-[80%] md:max-w-[70%] bg-slate-800 text-slate-200 p-4 rounded-2xl rounded-bl-sm shadow-md">
-          <p>Hello. I'm here to help you assess your symptoms. Please describe what you're experiencing in as much detail as possible.</p>
-        </div>
-      </div>
-      
-      <div className="flex justify-end mt-4">
-        <div className="max-w-[80%] md:max-w-[70%] bg-teal-700/80 text-white p-4 rounded-2xl rounded-br-sm shadow-md">
-          <p>I've been having a slight headache and feel a bit tired since yesterday morning.</p>
-        </div>
-      </div>
-    </ChatInterface>
+      messages={messages}
+      onSendMessage={handleSendMessage}
+      isLoading={isLoading}
+    />
   );
 };
-
 const AppointmentsCanvas = ({ isHistoryOpen, setIsHistoryOpen }: any) => {
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [selectedState, setSelectedState] = useState<string>('');
