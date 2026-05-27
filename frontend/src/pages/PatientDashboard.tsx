@@ -168,7 +168,7 @@ const ChatInterface = ({ isHistoryOpen, setIsHistoryOpen, historyTitle, disclaim
                 <div className={`max-w-[80%] md:max-w-[70%] p-4 rounded-2xl shadow-md ${
                   msg.role === 'user' ? 'bg-teal-700/80 text-white rounded-br-sm' : 'bg-slate-800 text-slate-200 rounded-bl-sm'
                 }`}>
-                  <p>{msg.text}</p>
+                  <p className="whitespace-pre-wrap">{msg.text}</p>
                 </div>
               </div>
             ))}
@@ -262,7 +262,9 @@ const TriageCanvas = ({ isHistoryOpen, setIsHistoryOpen, language }: any) => {
   // Map the dropdown name to the translation API code
   const langCodeMap: Record<string, string> = {
     'English': 'en', 'Hindi': 'hi', 'Gujarati': 'gu', 'Marathi': 'mr',
-    'Bengali': 'bn', 'Telugu': 'te', 'Tamil': 'ta', 'Urdu': 'ur'
+    'Bengali': 'bn', 'Telugu': 'te', 'Tamil': 'ta', 'Urdu': 'ur','Kannada': 'kn',   // ADDED
+    'Malayalam': 'ml', // ADDED
+    'Odia': 'or'       // ADDED
   };
 
   const handleSendMessage = async (text: string) => {
