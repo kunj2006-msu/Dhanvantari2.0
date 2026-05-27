@@ -114,6 +114,30 @@ const FeatureCanvas = ({
 const ChatInterface = ({ isHistoryOpen, setIsHistoryOpen, historyTitle, disclaimer, messages, onSendMessage, isLoading }: any) => {
   const [inputValue, setInputValue] = useState('');
 
+  // --- ADDED FORMATTER FUNCTION ---
+  // This function finds **text** and converts it into styled HTML bold tags
+  const formatMessage = (text: string) => {
+    if (!text) return null;
+    
+    // NEW: Clean up literal escaped newlines that Llama sometimes outputs
+    const cleanedText = text.replace(/\\n/g, '\n');
+    
+    // Split the text wherever it sees **...** using the cleaned text
+    const parts = cleanedText.split(/(\*\*.*?\*\*)/g);
+    
+    return parts.map((part, index) => {
+      if (part.startsWith('**') && part.endsWith('**')) {
+        return (
+          <strong key={index} className="font-semibold text-teal-300 drop-shadow-[0_0_8px_rgba(45,212,191,0.4)]">
+            {part.slice(2, -2)}
+          </strong>
+        );
+      }
+      return <span key={index}>{part}</span>;
+    });
+  };
+  // --------------------------------
+
   const handleSend = () => {
     if (!inputValue.trim() || isLoading) return;
     onSendMessage(inputValue);
@@ -162,25 +186,42 @@ const ChatInterface = ({ isHistoryOpen, setIsHistoryOpen, historyTitle, disclaim
         </div>
 
         {/* Dynamic Messages Rendering */}
-        <div className="flex-1 overflow-y-auto p-4 md:p-8 space-y-6 flex flex-col pt-12">
+       {/* --- CHAT AREA --- */}
+        <div className="relative flex-1 overflow-y-auto p-4 md:p-8 space-y-6 flex flex-col pt-12">
+            
+            {/* The Moving Background Feature (Trapped inside the chat area) */}
+            <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-teal-500/20 rounded-full blur-[100px] ambient-orb pointer-events-none"></div>
+            <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-blue-500/10 rounded-full blur-[80px] ambient-orb pointer-events-none" style={{ animationDelay: '-5s' }}></div>
+
+            {/* The Chat Cards */}
             {messages?.map((msg: any, idx: number) => (
-              <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-[80%] md:max-w-[70%] p-4 rounded-2xl shadow-md ${
-                  msg.role === 'user' ? 'bg-teal-700/80 text-white rounded-br-sm' : 'bg-slate-800 text-slate-200 rounded-bl-sm'
+              <div key={idx} className={`flex z-10 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                
+                {/* Premium Glassmorphism Card */}
+                <div className={`message-card max-w-[80%] md:max-w-[70%] p-5 rounded-2xl backdrop-blur-md shadow-lg border ${
+                  msg.role === 'user' 
+                    ? 'bg-teal-900/40 border-teal-500/30 text-teal-50 rounded-br-sm' 
+                    : 'bg-slate-800/50 border-slate-600/30 text-slate-200 rounded-bl-sm'
                 }`}>
-                  <p className="whitespace-pre-wrap">{msg.text}</p>
+                  {/* --- UPDATED FORMATTER CALL HERE --- */}
+                  <p className="whitespace-pre-wrap leading-relaxed">{formatMessage(msg.text)}</p>
                 </div>
+
               </div>
             ))}
+
+            {/* Loading State Card */}
             {isLoading && (
-              <div className="flex justify-start">
-                <div className="max-w-[80%] md:max-w-[70%] bg-slate-800 text-slate-400 p-4 rounded-2xl rounded-bl-sm shadow-md italic">
-                  <p>Processing medical data...</p>
+              <div className="flex z-10 justify-start">
+                <div className="message-card max-w-[80%] md:max-w-[70%] bg-slate-800/50 border border-slate-600/30 backdrop-blur-md text-teal-400 p-5 rounded-2xl rounded-bl-sm shadow-lg italic">
+                  <p className="flex items-center gap-2">
+                    <span className="w-2 h-2 bg-teal-400 rounded-full animate-ping"></span>
+                    Processing medical data...
+                  </p>
                 </div>
               </div>
             )}
         </div>
-
         {/* Input Area */}
         <div className="p-4 bg-slate-900/60 backdrop-blur-xl border-t border-white/5 z-10">
           <div className="max-w-4xl mx-auto flex items-end gap-2 bg-slate-800/50 border border-white/10 rounded-2xl p-2 focus-within:ring-2 focus-within:ring-teal-500/50 transition-all shadow-inner">
@@ -781,7 +822,7 @@ export default function PatientDashboard() {
               >
                 {activeView === 'overview' && <OverviewCanvas onSelectView={handleFeatureSelect} />}
                 {activeView === 'mental-health' && <MentalHealthCanvas isHistoryOpen={isHistoryOpen} setIsHistoryOpen={setIsHistoryOpen} />}
-                {activeView === 'triage' && <TriageCanvas isHistoryOpen={isHistoryOpen} setIsHistoryOpen={setIsHistoryOpen} />}
+                {activeView === 'triage' && <TriageCanvas isHistoryOpen={isHistoryOpen} setIsHistoryOpen={setIsHistoryOpen} language={language} />}
                 {activeView === 'appointments' && <AppointmentsCanvas isHistoryOpen={isHistoryOpen} setIsHistoryOpen={setIsHistoryOpen} />}
                 {activeView === 'see-profile' && <Profile />}
                 {activeView === 'edit-profile' && <EditProfileCanvas />}

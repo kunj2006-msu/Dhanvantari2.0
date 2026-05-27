@@ -43,3 +43,22 @@ body {
   }
 }
 
+/* --- Premium Chat Animations --- */
+@keyframes slideInUp {
+  from { opacity: 0; transform: translateY(15px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.message-card {
+  animation: slideInUp 0.4s ease-out forwards;
+}
+
+@keyframes floatOrb {
+  0% { transform: scale(1) translate(0px, 0px); opacity: 0.1; }
+  50% { transform: scale(1.1) translate(30px, -20px); opacity: 0.2; }
+  100% { transform: scale(1) translate(-20px, 20px); opacity: 0.1; }
+}
+
+.ambient-orb {
+  animation: floatOrb 10s infinite ease-in-out;
+}
