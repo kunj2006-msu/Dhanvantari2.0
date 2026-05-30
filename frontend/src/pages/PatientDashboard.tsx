@@ -1,6 +1,6 @@
-import { sendTriageMessage } from '../services/api';
+import { sendTriageMessage, fetchChatHistory, deleteChatSession, fetchSessionMessages } from '../services/api';
 import { Brain, Stethoscope, CalendarPlus, User, LogOut, LayoutDashboard, Globe, Settings, Trash2, Menu, PanelLeftClose, PanelLeftOpen, Send, MapPin } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authService } from '../services/authService';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -111,20 +111,18 @@ const FeatureCanvas = ({
   </div>
 );
 
-const ChatInterface = ({ isHistoryOpen, setIsHistoryOpen, historyTitle, disclaimer, messages, onSendMessage, isLoading }: any) => {
+const ChatInterface = ({ 
+  isHistoryOpen, setIsHistoryOpen, historyTitle, disclaimer, 
+  messages, onSendMessage, isLoading,
+  sessions = [], activeSessionId = null, 
+  onSelectSession, onDeleteSession, onNewSession
+}: any) => {
   const [inputValue, setInputValue] = useState('');
 
-  // --- ADDED FORMATTER FUNCTION ---
-  // This function finds **text** and converts it into styled HTML bold tags
   const formatMessage = (text: string) => {
     if (!text) return null;
-    
-    // NEW: Clean up literal escaped newlines that Llama sometimes outputs
-    const cleanedText = text.replace(/\\n/g, '\n');
-    
-    // Split the text wherever it sees **...** using the cleaned text
+    const cleanedText = text.replace(/\\n/g, '\n').replace(/\n{3,}/g, '\n\n');
     const parts = cleanedText.split(/(\*\*.*?\*\*)/g);
-    
     return parts.map((part, index) => {
       if (part.startsWith('**') && part.endsWith('**')) {
         return (
@@ -136,7 +134,6 @@ const ChatInterface = ({ isHistoryOpen, setIsHistoryOpen, historyTitle, disclaim
       return <span key={index}>{part}</span>;
     });
   };
-  // --------------------------------
 
   const handleSend = () => {
     if (!inputValue.trim() || isLoading) return;
@@ -160,7 +157,49 @@ const ChatInterface = ({ isHistoryOpen, setIsHistoryOpen, historyTitle, disclaim
             </div>
             <div className="p-4 min-w-[320px] overflow-y-auto">
               <div className="text-sm text-slate-500 flex flex-col gap-2">
-                <div className="p-3 rounded-xl bg-slate-800/30 border border-white/5 cursor-pointer hover:bg-slate-800/60 transition-colors">Session History placeholder</div>
+                <div className="p-4 min-w-[320px] flex flex-col h-full overflow-hidden">
+                  
+                  <button 
+                    onClick={onNewSession}
+                    className="w-full py-3 mb-4 rounded-xl border border-teal-500/30 bg-teal-500/10 hover:bg-teal-500/20 text-teal-300 font-medium transition-all shadow-[0_0_15px_rgba(45,212,191,0.1)] flex items-center justify-center gap-2"
+                  >
+                    + New Consultation
+                  </button>
+                  
+                  <div className="flex-1 overflow-y-auto space-y-2 pr-1 custom-scrollbar">
+                    {sessions.length === 0 ? (
+                       <div className="text-slate-500 text-sm text-center mt-10 italic">No past consultations</div>
+                    ) : (
+                      sessions.map((session: any, idx: number) => (
+                        <div 
+                          key={session.id || `fallback-${idx}`}
+                          onClick={() => onSelectSession && onSelectSession(session.id)}
+                          className={`group p-3 rounded-xl border cursor-pointer transition-colors flex justify-between items-center ${
+                            activeSessionId === session.id 
+                              ? 'bg-slate-700/50 border-teal-500/30' 
+                              : 'bg-slate-800/30 border-white/5 hover:bg-slate-800/60'
+                          }`}
+                        >
+                          <span className={`text-sm truncate ${activeSessionId === session.id ? 'text-teal-300 font-medium' : 'text-slate-300'}`}>
+                            {session.title || 'Consultation'}
+                          </span>
+                          {/* UPDATED: Red Lucide Icon instead of Emoji */}
+                          <button 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onDeleteSession && onDeleteSession(session.id, session.title || 'this consultation');
+                            }}
+                            className="opacity-0 group-hover:opacity-100 p-1 transition-opacity"
+                            title="Delete Session"
+                          >
+                            <Trash2 className="w-4 h-4 text-red-500 hover:text-red-400 drop-shadow-[0_0_5px_rgba(239,68,68,0.5)]" />
+                          </button>
+                        </div>
+                      ))
+                    )}
+                  </div>
+
+                </div>
               </div>
             </div>
           </motion.div>
@@ -185,32 +224,22 @@ const ChatInterface = ({ isHistoryOpen, setIsHistoryOpen, historyTitle, disclaim
             )}
         </div>
 
-        {/* Dynamic Messages Rendering */}
-       {/* --- CHAT AREA --- */}
         <div className="relative flex-1 overflow-y-auto p-4 md:p-8 space-y-6 flex flex-col pt-12">
-            
-            {/* The Moving Background Feature (Trapped inside the chat area) */}
             <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-teal-500/20 rounded-full blur-[100px] ambient-orb pointer-events-none"></div>
             <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-blue-500/10 rounded-full blur-[80px] ambient-orb pointer-events-none" style={{ animationDelay: '-5s' }}></div>
 
-            {/* The Chat Cards */}
             {messages?.map((msg: any, idx: number) => (
               <div key={idx} className={`flex z-10 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                
-                {/* Premium Glassmorphism Card */}
                 <div className={`message-card max-w-[80%] md:max-w-[70%] p-5 rounded-2xl backdrop-blur-md shadow-lg border ${
                   msg.role === 'user' 
                     ? 'bg-teal-900/40 border-teal-500/30 text-teal-50 rounded-br-sm' 
                     : 'bg-slate-800/50 border-slate-600/30 text-slate-200 rounded-bl-sm'
                 }`}>
-                  {/* --- UPDATED FORMATTER CALL HERE --- */}
                   <p className="whitespace-pre-wrap leading-relaxed">{formatMessage(msg.text)}</p>
                 </div>
-
               </div>
             ))}
 
-            {/* Loading State Card */}
             {isLoading && (
               <div className="flex z-10 justify-start">
                 <div className="message-card max-w-[80%] md:max-w-[70%] bg-slate-800/50 border border-slate-600/30 backdrop-blur-md text-teal-400 p-5 rounded-2xl rounded-bl-sm shadow-lg italic">
@@ -222,7 +251,7 @@ const ChatInterface = ({ isHistoryOpen, setIsHistoryOpen, historyTitle, disclaim
               </div>
             )}
         </div>
-        {/* Input Area */}
+
         <div className="p-4 bg-slate-900/60 backdrop-blur-xl border-t border-white/5 z-10">
           <div className="max-w-4xl mx-auto flex items-end gap-2 bg-slate-800/50 border border-white/10 rounded-2xl p-2 focus-within:ring-2 focus-within:ring-teal-500/50 transition-all shadow-inner">
             <textarea 
@@ -251,6 +280,7 @@ const ChatInterface = ({ isHistoryOpen, setIsHistoryOpen, historyTitle, disclaim
     </div>
   );
 };
+
 
 const MentalHealthCanvas = ({ isHistoryOpen, setIsHistoryOpen }: any) => {
   const [selectedMood, setSelectedMood] = useState<string | null>(null);
@@ -295,17 +325,68 @@ const MentalHealthCanvas = ({ isHistoryOpen, setIsHistoryOpen }: any) => {
 };
 
 const TriageCanvas = ({ isHistoryOpen, setIsHistoryOpen, language }: any) => {
-  const [messages, setMessages] = useState([
-    { role: 'ai', text: "Hello. I'm here to help you assess your symptoms. Please describe what you're experiencing in as much detail as possible." }
-  ]);
+  const defaultMessage = { role: 'ai', text: "Hello. I'm here to help you assess your symptoms. Please describe what you're experiencing in as much detail as possible." };
+  
+  const [messages, setMessages] = useState([defaultMessage]);
   const [isLoading, setIsLoading] = useState(false);
+  
+  const [sessions, setSessions] = useState<any[]>([]);
+  const [activeSessionId, setActiveSessionId] = useState<number | null>(null);
+  
+  // NEW: State to control the delete confirmation modal
+  const [sessionToDelete, setSessionToDelete] = useState<{id: number, title: string} | null>(null);
 
-  // Map the dropdown name to the translation API code
+  const loadHistory = async () => {
+    try {
+      const historyData = await fetchChatHistory();
+      if (Array.isArray(historyData)) {
+        setSessions(historyData);
+      } else {
+        setSessions([]);
+      }
+    } catch (error) {
+      console.error("Failed to load history", error);
+    }
+  };
+
+  useEffect(() => {
+    loadHistory();
+  }, []);
+
+  const handleNewSession = () => {
+    setMessages([defaultMessage]); 
+    setActiveSessionId(null);      
+  };
+
+  // UPDATED: This actually triggers the deletion once confirmed
+  const confirmDelete = async () => {
+    if (!sessionToDelete) return;
+    const success = await deleteChatSession(sessionToDelete.id);
+    if (success) {
+      setSessions(sessions.filter(s => s.id !== sessionToDelete.id));
+      if (activeSessionId === sessionToDelete.id) handleNewSession();
+    }
+    setSessionToDelete(null); // Close the modal
+  };
+
+  const handleSelectSession = async (id: number) => {
+    setActiveSessionId(id);
+    setIsLoading(true);
+    
+    const pastMessages = await fetchSessionMessages(id);
+    if (pastMessages && pastMessages.length > 0) {
+      setMessages(pastMessages);
+    } else {
+      setMessages([defaultMessage]);
+    }
+    
+    setIsLoading(false);
+  };
+
   const langCodeMap: Record<string, string> = {
     'English': 'en', 'Hindi': 'hi', 'Gujarati': 'gu', 'Marathi': 'mr',
-    'Bengali': 'bn', 'Telugu': 'te', 'Tamil': 'ta', 'Urdu': 'ur','Kannada': 'kn',   // ADDED
-    'Malayalam': 'ml', // ADDED
-    'Odia': 'or'       // ADDED
+    'Bengali': 'bn', 'Telugu': 'te', 'Tamil': 'ta', 'Urdu': 'ur','Kannada': 'kn',
+    'Malayalam': 'ml', 'Odia': 'or'
   };
 
   const handleSendMessage = async (text: string) => {
@@ -314,25 +395,83 @@ const TriageCanvas = ({ isHistoryOpen, setIsHistoryOpen, language }: any) => {
 
     try {
       const code = langCodeMap[language] || 'en';
-      const aiResponse = await sendTriageMessage(text, code);
-      setMessages(prev => [...prev, { role: 'ai', text: aiResponse }]);
+      
+      // Pass the activeSessionId to the API
+      const data = await sendTriageMessage(text, code, activeSessionId);
+      
+      setMessages(prev => [...prev, { role: 'ai', text: data.response }]);
+      
+      // If this was a brand new chat, lock into the newly created room ID so the next message stays here!
+      if (!activeSessionId) {
+        setActiveSessionId(data.sessionId);
+      }
+      
+      loadHistory();
     } catch (error) {
       setMessages(prev => [...prev, { role: 'ai', text: "Network error connecting to the medical service." }]);
     } finally {
       setIsLoading(false);
     }
   };
-
   return (
-    <ChatInterface 
-      isHistoryOpen={isHistoryOpen} 
-      setIsHistoryOpen={setIsHistoryOpen}
-      historyTitle="Past Triage Results"
-      disclaimer="⚠️ Disclaimer: This AI provides preliminary suggestions only. For serious symptoms or emergencies, please consult a real doctor immediately."
-      messages={messages}
-      onSendMessage={handleSendMessage}
-      isLoading={isLoading}
-    />
+    <>
+      <ChatInterface 
+        isHistoryOpen={isHistoryOpen} 
+        setIsHistoryOpen={setIsHistoryOpen}
+        historyTitle="Past Triage Results"
+        disclaimer="⚠️ Disclaimer: This AI provides preliminary suggestions only. For serious symptoms or emergencies, please consult a real doctor immediately."
+        messages={messages}
+        onSendMessage={handleSendMessage}
+        isLoading={isLoading}
+        sessions={sessions}
+        activeSessionId={activeSessionId}
+        onSelectSession={handleSelectSession}
+        // UPDATED: Instead of deleting immediately, open the modal
+        onDeleteSession={(id: number, title: string) => setSessionToDelete({ id, title })}
+        onNewSession={handleNewSession}
+      />
+
+      {/* NEW: Premium Glassmorphism Delete Modal */}
+      <AnimatePresence>
+        {sessionToDelete && (
+          <div 
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center"
+            onClick={() => setSessionToDelete(null)}
+          >
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-slate-800/90 border border-white/10 rounded-2xl p-6 max-w-sm w-full mx-4 shadow-2xl text-center"
+            >
+              <div className="w-12 h-12 rounded-full bg-red-500/20 flex items-center justify-center mx-auto mb-4 border border-red-500/30">
+                <Trash2 className="w-6 h-6 text-red-500" />
+              </div>
+              <h2 className="text-xl font-bold text-slate-100 mb-2">Delete Consultation?</h2>
+              <p className="text-slate-400 text-sm mb-6">
+                Are you sure you want to delete <span className="text-slate-200 font-semibold">"{sessionToDelete.title}"</span>? This action cannot be undone.
+              </p>
+              
+              <div className="flex gap-4">
+                <button 
+                  onClick={() => setSessionToDelete(null)}
+                  className="flex-1 px-4 py-2 bg-slate-700/50 hover:bg-slate-700 text-slate-200 rounded-xl transition-colors font-medium border border-white/5"
+                >
+                  Cancel
+                </button>
+                <button 
+                  onClick={confirmDelete}
+                  className="flex-1 px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 hover:border-red-500/50 rounded-xl transition-all font-medium shadow-[0_0_15px_rgba(239,68,68,0.2)]"
+                >
+                  Delete
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+    </>
   );
 };
 const AppointmentsCanvas = ({ isHistoryOpen, setIsHistoryOpen }: any) => {

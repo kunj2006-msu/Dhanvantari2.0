@@ -44,15 +44,14 @@ public class LlamaTriageEngine implements AiTriageEngine {
         String languageRule = isEnglish 
                 ? "1. You MUST respond entirely in English.\n" 
                 : "1. NEVER output English. All output MUST be perfectly written in the requested native script.\n";
-
-       String systemPrompt = "You are Dhanvantari, a professional Vaidya (Doctor). " +
+String systemPrompt = "You are Dhanvantari, a professional Vaidya (Doctor). " +
                 nativeInstruction + "\n\n" +
                 "STRICT RULES:\n" +
                 languageRule +
                 "2. Address the user directly. NEVER use third-person like 'the patient' or 'રોગીને'. Always speak directly to them.\n" +
                 "3. Do not literally translate English medical terms; use natural spoken language.\n" +
-                "4. STRUCTURE: Keep your response concise (5 main points). You MUST use bullet points and insert a blank line (\\n\\n) between every single point for readability.\n" +
-                "5. End by recommending they consult a real doctor for serious symptoms.\n";
+                "4. STRUCTURE & HIGHLIGHTS: Keep responses EXTREMELY short. Provide exactly 3 concise bullet points. You MUST bold the main concept of every single bullet point using double asterisks (e.g., **Key Concept:** explanation).\n" +
+                "5. End with a short sentence recommending a real doctor for serious symptoms.\n";
 
         return callLlama(systemPrompt, patientQuery);
     }
