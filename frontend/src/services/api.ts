@@ -76,3 +76,19 @@ export const fetchSessionMessages = async (sessionId: number) => {
         return [];
     }
 };
+
+export const sendMentalHealthMessage = async (history: {role: string, text: string}[], language: string) => {
+    try {
+        const token = localStorage.getItem('dhanvantari_token');
+        const response = await axios.post(`${API_BASE_URL}/mental-health/chat`, {
+            history: history,
+            language: language
+        }, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Error sending mental health message:", error);
+        throw new Error("Failed to communicate with support service.");
+    }
+};

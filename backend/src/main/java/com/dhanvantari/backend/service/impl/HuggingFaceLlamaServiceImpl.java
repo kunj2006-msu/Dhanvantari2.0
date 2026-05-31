@@ -22,9 +22,8 @@ public class HuggingFaceLlamaServiceImpl implements HuggingFaceLlamaService {
     @Value("${huggingface.api.key}")
     private String apiKey;
 
-    @Value("${huggingface.model.url}")
+  @Value("${huggingface.model.url}")
     private String modelUrl;
-
     // (Keep your existing MULTILINGUAL_PROMPTS map and the
     // generateEmpatheticResponse method exactly as they are below this line)
 
@@ -71,4 +70,46 @@ public class HuggingFaceLlamaServiceImpl implements HuggingFaceLlamaService {
 
         return "Sorry, I couldn't generate a response at this time.";
     }
-}
+
+    // NEW: The Developer's Bypass - Groq API Implementation
+    @Override
+    public String generateResponse(String fullPrompt) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.set("Authorization", "Bearer " + apiKey);
+
+        // 1. Pack the message into the Groq format
+        Map<String, String> message = new HashMap<>();
+        message.put("role", "user");
+        message.put("content", fullPrompt);
+
+        // 2. Request the exact same Llama model, but from Groq's servers
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("model", "llama-3.3-70b-versatile"); 
+        requestBody.put("messages", new Object[]{message});
+
+        HttpEntity<Map<String, Object>> requestEntity = new HttpEntity<>(requestBody, headers);
+
+        try {
+            // 3. Send to Groq
+            ResponseEntity<String> response = restTemplate.postForEntity(modelUrl, requestEntity, String.class);
+            
+            if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
+                // 4. Unpack the Groq response
+                JsonNode root = objectMapper.readTree(response.getBody());
+                JsonNode choices = root.path("choices");
+                
+                if (choices.isArray() && choices.size() > 0) {
+                    JsonNode messageNode = choices.get(0).path("message");
+                    if (messageNode.has("content")) {
+                        return messageNode.get("content").asText().trim();
+                    }
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Groq API Error: " + e.getMessage());
+            return "Sorry, I am currently unable to connect to the support server. Please try again later.";
+        }
+
+        return "Sorry, I couldn't generate a response at this time.";
+    }}

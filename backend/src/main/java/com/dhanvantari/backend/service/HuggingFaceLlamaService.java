@@ -35,5 +35,6 @@ public interface HuggingFaceLlamaService {
      * @return Empathetic response string.
      */
     String generateEmpatheticResponse(String userMessage, com.dhanvantari.backend.entity.ChatType chatType, String language);
-
+    // NEW: A pure method that sends exactly what we give it, with no extra prompts added
+    String generateResponse(String fullPrompt);
 }

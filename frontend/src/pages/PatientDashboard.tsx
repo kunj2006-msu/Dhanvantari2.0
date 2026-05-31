@@ -1,4 +1,4 @@
-import { sendTriageMessage, fetchChatHistory, deleteChatSession, fetchSessionMessages } from '../services/api';
+import { sendTriageMessage, fetchChatHistory, deleteChatSession, fetchSessionMessages, sendMentalHealthMessage } from '../services/api';
 import { Brain, Stethoscope, CalendarPlus, User, LogOut, LayoutDashboard, Globe, Settings, Trash2, Menu, PanelLeftClose, PanelLeftOpen, Send, MapPin } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -281,29 +281,228 @@ const ChatInterface = ({
   );
 };
 
+const PrivateChatInterface = ({ initialMood, messages, onSendMessage, isLoading, onSessionComplete }: any) => {
+  const [inputValue, setInputValue] = useState('');
+  const [showEndConfirm, setShowEndConfirm] = useState(false);
+  const [showPostMood, setShowPostMood] = useState(false);
 
-const MentalHealthCanvas = ({ isHistoryOpen, setIsHistoryOpen }: any) => {
+  const moods = [
+    { label: 'Terrible', emoji: '😫', color: 'text-red-400', border: 'hover:border-red-500/50', bg: 'hover:bg-red-500/10' },
+    { label: 'Bad', emoji: '😔', color: 'text-orange-400', border: 'hover:border-orange-500/50', bg: 'hover:bg-orange-500/10' },
+    { label: 'Okay', emoji: '😐', color: 'text-yellow-400', border: 'hover:border-yellow-500/50', bg: 'hover:bg-yellow-500/10' },
+    { label: 'Good', emoji: '🙂', color: 'text-teal-400', border: 'hover:border-teal-500/50', bg: 'hover:bg-teal-500/10' },
+    { label: 'Great', emoji: '😁', color: 'text-green-400', border: 'hover:border-green-500/50', bg: 'hover:bg-green-500/10' }
+  ];
+
+  const formatMessage = (text: string) => {
+    if (!text) return null;
+    const cleanedText = text.replace(/\\n/g, '\n').replace(/\n{3,}/g, '\n\n');
+    const parts = cleanedText.split(/(\*\*.*?\*\*)/g);
+    return parts.map((part, index) => {
+      if (part.startsWith('**') && part.endsWith('**')) {
+        return <strong key={index} className="font-semibold text-teal-300 drop-shadow-[0_0_8px_rgba(45,212,191,0.4)]">{part.slice(2, -2)}</strong>;
+      }
+      return <span key={index}>{part}</span>;
+    });
+  };
+
+  const handleSend = () => {
+    if (!inputValue.trim() || isLoading) return;
+    onSendMessage(inputValue);
+    setInputValue('');
+  };
+
+  const handleFinalMoodSelect = (finalMood: string) => {
+    // We will wire this to the Java backend tomorrow!
+    console.log(`Saving to DB - Started: ${initialMood}, Ended: ${finalMood}`);
+    setShowPostMood(false);
+    onSessionComplete(); // This wipes the chat and returns to the start screen
+  };
+
+  return (
+    <div className="flex flex-col h-full w-full relative bg-slate-900/10">
+      {/* Floating Red End Session Button */}
+      <div className="absolute top-6 right-6 z-30">
+        <button 
+          onClick={() => setShowEndConfirm(true)}
+          className="px-4 py-2.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 hover:border-red-500/50 rounded-xl flex items-center gap-2 transition-all shadow-[0_0_15px_rgba(239,68,68,0.15)] hover:shadow-[0_0_20px_rgba(239,68,68,0.3)] backdrop-blur-md"
+        >
+          <LogOut className="w-4 h-4" />
+          <span className="font-medium text-sm">End Session</span>
+        </button>
+      </div>
+
+      <div className="pt-6 px-16 z-10 flex justify-center mt-2">
+        <div className="text-sm font-medium text-teal-400 bg-teal-400/10 border border-teal-400/20 px-6 py-2.5 rounded-full shadow-lg text-center max-w-2xl backdrop-blur-md flex items-center gap-2">
+          💚 This is a private, unrecorded safe space. Messages vanish when you leave.
+        </div>
+      </div>
+
+      <div className="relative flex-1 overflow-y-auto p-4 md:p-8 space-y-6 flex flex-col pt-12 custom-scrollbar">
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-teal-500/10 rounded-full blur-[100px] ambient-orb pointer-events-none"></div>
+        <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-emerald-500/10 rounded-full blur-[80px] ambient-orb pointer-events-none" style={{ animationDelay: '-5s' }}></div>
+
+        {messages?.map((msg: any, idx: number) => (
+          <div key={idx} className={`flex z-10 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+            <div className={`message-card max-w-[80%] md:max-w-[60%] p-5 rounded-2xl backdrop-blur-md shadow-lg border ${
+              msg.role === 'user' 
+                ? 'bg-teal-900/40 border-teal-500/30 text-teal-50 rounded-br-sm' 
+                : 'bg-slate-800/60 border-slate-600/30 text-slate-200 rounded-bl-sm'
+            }`}>
+              <p className="whitespace-pre-wrap leading-relaxed">{formatMessage(msg.text)}</p>
+            </div>
+          </div>
+        ))}
+
+        {isLoading && (
+          <div className="flex z-10 justify-start">
+            <div className="message-card max-w-[80%] md:max-w-[60%] bg-slate-800/60 border border-slate-600/30 backdrop-blur-md text-teal-400 p-5 rounded-2xl rounded-bl-sm shadow-lg italic">
+              <p className="flex items-center gap-2">
+                <span className="w-2 h-2 bg-teal-400 rounded-full animate-ping"></span>
+                Listening...
+              </p>
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div className="p-4 bg-slate-900/60 backdrop-blur-xl border-t border-white/5 z-20">
+        <div className="max-w-4xl mx-auto flex items-end gap-2 bg-slate-800/50 border border-white/10 rounded-2xl p-2 focus-within:ring-2 focus-within:ring-teal-500/50 transition-all shadow-inner">
+          <textarea 
+            rows={1}
+            value={inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                handleSend();
+              }
+            }}
+            placeholder="Share what's on your mind..."
+            className="flex-1 bg-transparent text-slate-200 resize-none max-h-32 focus:outline-none p-2 min-h-[44px]"
+          />
+          <button 
+            onClick={handleSend}
+            disabled={isLoading}
+            className="p-3 rounded-xl bg-teal-500 text-white hover:bg-teal-400 disabled:opacity-50 transition-colors shadow-[0_0_15px_rgba(20,184,166,0.4)] mb-0.5"
+          >
+            <Send className="w-5 h-5" />
+          </button>
+        </div>
+      </div>
+
+      {/* POPUP 1: Confirm End Session */}
+      <AnimatePresence>
+        {showEndConfirm && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-slate-800/90 border border-white/10 rounded-3xl p-8 max-w-md w-full mx-4 shadow-2xl text-center"
+            >
+              <h2 className="text-2xl font-bold text-slate-100 mb-3">End Session?</h2>
+              <p className="text-slate-400 text-sm mb-8">
+                Are you sure you want to leave? This is a private space, so your chat history will be permanently erased once you exit.
+              </p>
+              <div className="flex gap-4">
+                <button 
+                  onClick={() => setShowEndConfirm(false)}
+                  className="flex-1 px-4 py-3 bg-slate-700/50 hover:bg-slate-700 text-slate-200 rounded-xl transition-colors font-medium border border-white/5"
+                >
+                  Stay
+                </button>
+                <button 
+                  onClick={() => {
+                    setShowEndConfirm(false);
+                    setShowPostMood(true);
+                  }}
+                  className="flex-1 px-4 py-3 bg-teal-500/10 hover:bg-teal-500/20 text-teal-400 border border-teal-500/30 hover:border-teal-500/50 rounded-xl transition-all font-medium shadow-[0_0_15px_rgba(45,212,191,0.2)]"
+                >
+                  Yes, End Session
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* POPUP 2: Post-Chat Mood Check */}
+      <AnimatePresence>
+        {showPostMood && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-slate-800/90 border border-white/10 rounded-3xl p-8 max-w-2xl w-full mx-4 shadow-2xl text-center"
+            >
+              <h2 className="text-2xl font-bold text-slate-100 mb-2">Thank you for sharing.</h2>
+              <p className="text-slate-400 text-sm mb-8">Take a deep breath. How are you feeling now after talking?</p>
+              
+              <div className="flex flex-wrap justify-center gap-4 mb-8">
+                {moods.map((m) => (
+                  <button
+                    key={m.label}
+                    onClick={() => handleFinalMoodSelect(m.label)}
+                    className={`w-24 h-24 rounded-2xl bg-slate-900/50 border border-white/5 transition-all duration-300 flex flex-col items-center justify-center gap-2 ${m.border} ${m.bg} shadow-lg hover:scale-105`}
+                  >
+                    <span className="text-4xl">{m.emoji}</span>
+                    <span className={`text-sm font-medium ${m.color}`}>{m.label}</span>
+                  </button>
+                ))}
+              </div>
+              <button 
+                onClick={() => {
+                  setShowPostMood(false);
+                  setShowEndConfirm(true); // Go back to previous menu
+                }}
+                className="text-slate-500 hover:text-slate-300 text-sm font-medium transition-colors"
+              >
+                Cancel and return to chat
+              </button>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
+
+const MentalHealthCanvas = ({ isHistoryOpen, setIsHistoryOpen, language }: any) => {
   const [selectedMood, setSelectedMood] = useState<string | null>(null);
-  
-  // Placeholder logic for when we build this engine
   const [messages, setMessages] = useState<{role: string, text: string}[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const moods = [
+    { label: 'Terrible', emoji: '😫', color: 'text-red-400', border: 'hover:border-red-500/50', bg: 'hover:bg-red-500/10' },
+    { label: 'Bad', emoji: '😔', color: 'text-orange-400', border: 'hover:border-orange-500/50', bg: 'hover:bg-orange-500/10' },
+    { label: 'Okay', emoji: '😐', color: 'text-yellow-400', border: 'hover:border-yellow-500/50', bg: 'hover:bg-yellow-500/10' },
+    { label: 'Good', emoji: '🙂', color: 'text-teal-400', border: 'hover:border-teal-500/50', bg: 'hover:bg-teal-500/10' },
+    { label: 'Great', emoji: '😁', color: 'text-green-400', border: 'hover:border-green-500/50', bg: 'hover:bg-green-500/10' }
+  ];
 
   if (!selectedMood) {
     return (
       <div className="flex h-full w-full relative">
-        <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
-          <h2 className="text-3xl font-bold text-slate-100 mb-8">How are you feeling right now?</h2>
-          <div className="flex gap-4">
-            {['Terrible', 'Bad', 'Okay', 'Good', 'Great'].map((mood) => (
+        <div className="flex-1 flex flex-col items-center justify-center p-8 text-center z-10">
+          <h2 className="text-3xl font-bold text-slate-100 mb-12 drop-shadow-md">How are you feeling right now?</h2>
+          
+          <div className="flex flex-wrap justify-center gap-6">
+            {moods.map((m) => (
               <button
-                key={mood}
+                key={m.label}
                 onClick={() => {
-                  setSelectedMood(mood);
-                  setMessages([{ role: 'ai', text: `I see you're feeling ${mood.toLowerCase()} today. I'm here to listen. What's on your mind?` }]);
+                  setSelectedMood(m.label);
+                  setMessages([{ 
+                    role: 'ai', 
+                    text: `I see you're feeling ${m.label.toLowerCase()} today. This is a safe space, and I'm here to listen without judgment. What's on your mind?` 
+                  }]);
                 }}
-                className="w-24 h-24 rounded-2xl bg-slate-800/50 border border-white/10 hover:border-teal-500/50 transition-colors"
+                className={`w-32 h-32 rounded-3xl bg-slate-800/40 border border-white/5 transition-all duration-300 flex flex-col items-center justify-center gap-3 ${m.border} ${m.bg} shadow-lg hover:scale-105 hover:shadow-xl`}
               >
-                {mood}
+                <span className="text-5xl">{m.emoji}</span>
+                <span className={`font-medium ${m.color}`}>{m.label}</span>
               </button>
             ))}
           </div>
@@ -312,14 +511,43 @@ const MentalHealthCanvas = ({ isHistoryOpen, setIsHistoryOpen }: any) => {
     );
   }
 
+ const handleSendMessage = async (text: string) => {
+    // Add user's message to the UI instantly
+    const newHistory = [...messages, { role: 'user', text }];
+    setMessages(newHistory);
+    setIsLoading(true);
+
+    try {
+      // Map the language to a short code, defaulting to English
+      const langCodeMap: Record<string, string> = {
+        'English': 'en', 'Hindi': 'hi', 'Gujarati': 'gu', 'Marathi': 'mr',
+        'Bengali': 'bn', 'Telugu': 'te', 'Tamil': 'ta', 'Urdu': 'ur'
+      };
+      const code = langCodeMap[language] || 'en';
+
+      // Send the ENTIRE chat history to Java
+      const data = await sendMentalHealthMessage(newHistory, code);
+      
+      // Add the real AI response to the UI
+      setMessages(prev => [...prev, { role: 'ai', text: data.response }]);
+    } catch (error) {
+      setMessages(prev => [...prev, { role: 'ai', text: "I'm having trouble connecting right now, but please know I'm here for you. Let's try again in a moment." }]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  const handleSessionComplete = () => {
+    setSelectedMood(null); // This instantly vaporizes the chat memory!
+    setMessages([]);
+  };
+
   return (
-    <ChatInterface 
-      isHistoryOpen={isHistoryOpen} 
-      setIsHistoryOpen={setIsHistoryOpen}
-      historyTitle="Past Sessions"
+    <PrivateChatInterface 
+      initialMood={selectedMood}
       messages={messages}
-      onSendMessage={(text: string) => setMessages(prev => [...prev, { role: 'user', text }])}
-      isLoading={false}
+      onSendMessage={handleSendMessage}
+      isLoading={isLoading}
+      onSessionComplete={handleSessionComplete}
     />
   );
 };

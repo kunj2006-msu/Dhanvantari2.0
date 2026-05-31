@@ -3,8 +3,11 @@ package com.dhanvantari.backend.controller;
 import com.dhanvantari.backend.dto.ai.ChatRequest;
 import com.dhanvantari.backend.entity.ChatType;
 import com.dhanvantari.backend.service.HuggingFaceLlamaService;
+import com.dhanvantari.backend.service.AiMentalHealthEngine;
 import com.dhanvantari.backend.service.ChatService; // NEW: Import our memory service
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal; // NEW: Security tracking
@@ -111,6 +114,29 @@ public class AiChatController {
             return ResponseEntity.ok(chatService.getSessionMessages(sessionId));
         } catch (Exception e) {
             return ResponseEntity.status(500).body(Map.of("error", "Failed to fetch messages."));
+        }
+    }
+
+    @Autowired
+    private AiMentalHealthEngine aiMentalHealthEngine;
+
+    // NEW: Ephemeral Mental Health Chat Endpoint
+    @PostMapping("/mental-health/chat")
+    public ResponseEntity<?> handleMentalHealthChat(
+            @AuthenticationPrincipal UserDetails userDetails, 
+            @RequestBody Map<String, Object> request) {
+        try {
+            // Extract the history and language from React
+            List<Map<String, String>> history = (List<Map<String, String>>) request.get("history");
+            String language = request.getOrDefault("language", "gu").toString();
+            
+            // Process directly through the engine (No database saving!)
+            String aiResponse = aiMentalHealthEngine.processSupportChat(history, language);
+            
+            return ResponseEntity.ok(Map.of("response", aiResponse));
+        } catch (Exception e) {
+            System.err.println("Mental Health AI Error: " + e.getMessage());
+            return ResponseEntity.status(500).body(Map.of("error", "Failed to process support chat."));
         }
     }
 }
