@@ -2,6 +2,7 @@ package com.dhanvantari.backend.controller;
 
 import com.dhanvantari.backend.dto.ai.ChatRequest;
 import com.dhanvantari.backend.entity.ChatType;
+import com.dhanvantari.backend.entity.MoodRecord;
 import com.dhanvantari.backend.service.HuggingFaceLlamaService;
 import com.dhanvantari.backend.service.AiMentalHealthEngine;
 import com.dhanvantari.backend.service.ChatService; // NEW: Import our memory service
@@ -138,5 +139,32 @@ public class AiChatController {
             System.err.println("Mental Health AI Error: " + e.getMessage());
             return ResponseEntity.status(500).body(Map.of("error", "Failed to process support chat."));
         }
+    }
+
+    @Autowired
+    private com.dhanvantari.backend.repository.MoodRecordRepository moodRepository;
+
+    // 1. SAVE THE MOOD SHIFT
+    @PostMapping("/mental-health/mood")
+    public ResponseEntity<?> saveMood(
+            @AuthenticationPrincipal org.springframework.security.core.userdetails.UserDetails userDetails,
+            @RequestBody Map<String, String> request) {
+        
+        String initialMood = request.get("initialMood"); // Get before-chat mood
+        String finalMood = request.get("finalMood");     // Get after-chat mood
+        
+        MoodRecord record = new MoodRecord(userDetails.getUsername(), java.time.LocalDate.now(), initialMood, finalMood);
+        moodRepository.save(record);
+        
+        return ResponseEntity.ok(Map.of("message", "Mood shift saved successfully"));
+    }
+
+    // 2. FETCH THE MOODS (Called when the Calendar loads)
+    @GetMapping("/mental-health/mood")
+    public ResponseEntity<?> getMoodHistory(
+            @AuthenticationPrincipal org.springframework.security.core.userdetails.UserDetails userDetails) {
+        
+        List<MoodRecord> history = moodRepository.findByUserEmailOrderByRecordedDateDesc(userDetails.getUsername());
+        return ResponseEntity.ok(history);
     }
 }

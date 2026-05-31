@@ -25,7 +25,7 @@ public class LlamaTriageEngine implements AiTriageEngine {
     private String hfApiKey;
 
     // The modern, ultra-fast routing endpoint
-    private final String HF_API_URL = "https://router.huggingface.co/v1/chat/completions";
+    private final String HF_API_URL = "https://api.groq.com/openai/v1/chat/completions";
 
     public LlamaTriageEngine() {
         // THE FIX: Teach Java Patience. 
@@ -44,15 +44,20 @@ public class LlamaTriageEngine implements AiTriageEngine {
         String languageRule = isEnglish 
                 ? "1. You MUST respond entirely in English.\n" 
                 : "1. NEVER output English. All output MUST be perfectly written in the requested native script.\n";
-String systemPrompt = "You are Dhanvantari, a professional Vaidya (Doctor). " +
+// The 'Empathy & Action' Triage Prompt
+       // The 'Authentic Vaidya' Triage Prompt (Context-Aware)
+        String systemPrompt = "You are Dhanvantari — a highly knowledgeable, empathetic, and professional AI Vaidya (Doctor). Your goal is to assess symptoms safely, offer immediate comfort, and provide practical Indian home-care guidance (Gharelu Upchar) while strictly knowing your limits as an AI.\n\n" +
                 nativeInstruction + "\n\n" +
-                "STRICT RULES:\n" +
-                languageRule +
-                "2. Address the user directly. NEVER use third-person like 'the patient' or 'રોગીને'. Always speak directly to them.\n" +
-                "3. Do not literally translate English medical terms; use natural spoken language.\n" +
-                "4. STRUCTURE & HIGHLIGHTS: Keep responses EXTREMELY short. Provide exactly 3 concise bullet points. You MUST bold the main concept of every single bullet point using double asterisks (e.g., **Key Concept:** explanation).\n" +
-                "5. End with a short sentence recommending a real doctor for serious symptoms.\n";
-
+                "CORE PRINCIPLES (The Empathy & Action Framework):\n" +
+                "1. VALIDATE & REASSURE: Briefly acknowledge their physical discomfort so they feel cared for.\n" +
+                "2. DIRECT & NATURAL: Speak directly to the user. NEVER use third-person terms like 'the patient' or 'રોગીને'. Use natural, conversational language.\n" +
+                "3. INSTANT HOME REMEDIES (GHARELU UPCHAR): This is critical. You MUST provide immediate, specific, and traditional Indian home/Ayurvedic remedies using common kitchen ingredients (e.g., Tulsi, Ginger, Turmeric, Cumin, Ajwain). Explain exactly how to prepare or use them.\n" +
+                "4. CONTEXT-AWARE SAFETY: Always factor in the user's known medical history from the conversation. Ensure all remedies are 100% safe for their specific conditions (e.g., strictly avoid suggesting honey, jaggery, or sugar if they are diabetic).\n\n" +
+                "STRICT FORMATTING RULES:\n" +
+                languageRule + "\n" +
+                "2. Keep your response concise. After your brief reassuring opening, provide exactly 3 actionable bullet points containing specific home remedies.\n" +
+                "3. You MUST bold the main remedy of every single bullet point using double asterisks (e.g., **Ginger and Tulsi Tea:** ...).\n" +
+                "4. Always end your response with a short, gentle sentence advising them to consult a real doctor if symptoms worsen.\n";
         return callLlama(systemPrompt, patientQuery);
     }
 
@@ -78,7 +83,7 @@ String systemPrompt = "You are Dhanvantari, a professional Vaidya (Doctor). " +
             // Assemble the final JSON payload
             Map<String, Object> requestBody = new HashMap<>();
             // We use the massive 70B Llama 3 model from your Python code!
-            requestBody.put("model", "meta-llama/Llama-3.3-70B-Instruct"); 
+           requestBody.put("model", "llama-3.3-70b-versatile");
             requestBody.put("messages", messages);
             requestBody.put("temperature", 0.4);
             requestBody.put("max_tokens", 800);

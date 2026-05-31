@@ -1,11 +1,12 @@
-import { sendTriageMessage, fetchChatHistory, deleteChatSession, fetchSessionMessages, sendMentalHealthMessage } from '../services/api';
+import { sendTriageMessage, fetchChatHistory, deleteChatSession, fetchSessionMessages, sendMentalHealthMessage, saveMoodSession, fetchMoodHistory } from '../services/api';
 import { Brain, Stethoscope, CalendarPlus, User, LogOut, LayoutDashboard, Globe, Settings, Trash2, Menu, PanelLeftClose, PanelLeftOpen, Send, MapPin } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authService } from '../services/authService';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CustomDropdown } from '../components/CustomDropdown';
 import { CustomDatePicker } from '../components/CustomDatePicker';
+import Profile from '../components/profile/Profile';
 
 const OverviewCanvas = ({ onSelectView }: { onSelectView: (view: any) => void }) => (
   <div className="flex-1 flex items-center justify-center p-8 h-full">
@@ -58,59 +59,6 @@ const OverviewCanvas = ({ onSelectView }: { onSelectView: (view: any) => void })
   </div>
 );
 
-const FeatureCanvas = ({ 
-  title, 
-  historyTitle, 
-  isHistoryOpen, 
-  setIsHistoryOpen 
-}: { 
-  title: string, 
-  historyTitle: string, 
-  isHistoryOpen: boolean, 
-  setIsHistoryOpen: (v: boolean) => void 
-}) => (
-  <div className="flex h-full w-full">
-    {/* Inner History Sidebar */}
-    <AnimatePresence initial={false}>
-      {isHistoryOpen && (
-        <motion.div 
-          initial={{ width: 0, opacity: 0 }}
-          animate={{ width: 320, opacity: 1 }}
-          exit={{ width: 0, opacity: 0 }}
-          transition={{ duration: 0.3 }}
-          className="border-r border-white/5 bg-slate-900/40 flex flex-col overflow-hidden shrink-0 z-20"
-        >
-          <div className="p-4 border-b border-white/5 flex items-center justify-between min-w-[320px] h-16">
-            <h3 className="font-semibold text-slate-200">{historyTitle}</h3>
-          </div>
-          <div className="p-4 min-w-[320px]">
-            <div className="text-sm text-slate-500 flex flex-col gap-2">
-              <div className="p-3 rounded-xl bg-slate-800/30 border border-white/5 cursor-pointer hover:bg-slate-800/60 transition-colors">Placeholder item 1</div>
-              <div className="p-3 rounded-xl bg-slate-800/30 border border-white/5 cursor-pointer hover:bg-slate-800/60 transition-colors">Placeholder item 2</div>
-            </div>
-          </div>
-        </motion.div>
-      )}
-    </AnimatePresence>
-
-    {/* Main Active Area */}
-    <div className="flex-1 flex flex-col relative min-w-0">
-      <div className="absolute top-4 left-4 z-10">
-        <button 
-          onClick={() => setIsHistoryOpen(!isHistoryOpen)}
-          className="p-2 rounded-lg bg-slate-800/80 hover:bg-slate-700 border border-white/10 text-slate-300 transition-colors backdrop-blur-md shadow-lg"
-          title={isHistoryOpen ? "Close History" : "Open History"}
-        >
-          {isHistoryOpen ? <PanelLeftClose className="w-5 h-5" /> : <PanelLeftOpen className="w-5 h-5" />}
-        </button>
-      </div>
-      <div className="flex-1 flex items-center justify-center p-8 text-center">
-        <div className="text-2xl font-semibold text-slate-200">{title}</div>
-      </div>
-    </div>
-  </div>
-);
-
 const ChatInterface = ({ 
   isHistoryOpen, setIsHistoryOpen, historyTitle, disclaimer, 
   messages, onSendMessage, isLoading,
@@ -118,6 +66,14 @@ const ChatInterface = ({
   onSelectSession, onDeleteSession, onNewSession
 }: any) => {
   const [inputValue, setInputValue] = useState('');
+
+  // 1. ADD THESE THREE LINES: Create the ref and the scroll function
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, isLoading]); // Scroll whenever messages change or loading starts!
+
+  // ... (Keep your formatMessage and handleSend functions exactly the same) ...
 
   const formatMessage = (text: string) => {
     if (!text) return null;
@@ -183,7 +139,6 @@ const ChatInterface = ({
                           <span className={`text-sm truncate ${activeSessionId === session.id ? 'text-teal-300 font-medium' : 'text-slate-300'}`}>
                             {session.title || 'Consultation'}
                           </span>
-                          {/* UPDATED: Red Lucide Icon instead of Emoji */}
                           <button 
                             onClick={(e) => {
                               e.stopPropagation();
@@ -250,6 +205,8 @@ const ChatInterface = ({
                 </div>
               </div>
             )}
+            {/* 2. ADD THIS LINE: The invisible Dummy Div at the very bottom of the messages */}
+            <div ref={messagesEndRef} />
         </div>
 
         <div className="p-4 bg-slate-900/60 backdrop-blur-xl border-t border-white/5 z-10">
@@ -286,6 +243,13 @@ const PrivateChatInterface = ({ initialMood, messages, onSendMessage, isLoading,
   const [showEndConfirm, setShowEndConfirm] = useState(false);
   const [showPostMood, setShowPostMood] = useState(false);
 
+  // 1. ADD THESE THREE LINES HERE TOO
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, isLoading]);
+
+  // ... (Keep moods array, formatMessage, and handleSend the same) ...
   const moods = [
     { label: 'Terrible', emoji: '😫', color: 'text-red-400', border: 'hover:border-red-500/50', bg: 'hover:bg-red-500/10' },
     { label: 'Bad', emoji: '😔', color: 'text-orange-400', border: 'hover:border-orange-500/50', bg: 'hover:bg-orange-500/10' },
@@ -312,16 +276,18 @@ const PrivateChatInterface = ({ initialMood, messages, onSendMessage, isLoading,
     setInputValue('');
   };
 
-  const handleFinalMoodSelect = (finalMood: string) => {
-    // We will wire this to the Java backend tomorrow!
-    console.log(`Saving to DB - Started: ${initialMood}, Ended: ${finalMood}`);
+ const handleFinalMoodSelect = async (finalMood: string) => {
+    try {
+      await saveMoodSession(initialMood, finalMood); 
+    } catch (error) {
+      console.error("Failed to save mood");
+    }
     setShowPostMood(false);
-    onSessionComplete(); // This wipes the chat and returns to the start screen
+    onSessionComplete();
   };
 
   return (
     <div className="flex flex-col h-full w-full relative bg-slate-900/10">
-      {/* Floating Red End Session Button */}
       <div className="absolute top-6 right-6 z-30">
         <button 
           onClick={() => setShowEndConfirm(true)}
@@ -364,6 +330,8 @@ const PrivateChatInterface = ({ initialMood, messages, onSendMessage, isLoading,
             </div>
           </div>
         )}
+        {/* 2. ADD THIS LINE: The invisible Dummy Div at the bottom */}
+        <div ref={messagesEndRef} />
       </div>
 
       <div className="p-4 bg-slate-900/60 backdrop-blur-xl border-t border-white/5 z-20">
@@ -391,7 +359,6 @@ const PrivateChatInterface = ({ initialMood, messages, onSendMessage, isLoading,
         </div>
       </div>
 
-      {/* POPUP 1: Confirm End Session */}
       <AnimatePresence>
         {showEndConfirm && (
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center">
@@ -427,7 +394,6 @@ const PrivateChatInterface = ({ initialMood, messages, onSendMessage, isLoading,
         )}
       </AnimatePresence>
 
-      {/* POPUP 2: Post-Chat Mood Check */}
       <AnimatePresence>
         {showPostMood && (
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center">
@@ -455,7 +421,7 @@ const PrivateChatInterface = ({ initialMood, messages, onSendMessage, isLoading,
               <button 
                 onClick={() => {
                   setShowPostMood(false);
-                  setShowEndConfirm(true); // Go back to previous menu
+                  setShowEndConfirm(true); 
                 }}
                 className="text-slate-500 hover:text-slate-300 text-sm font-medium transition-colors"
               >
@@ -469,27 +435,173 @@ const PrivateChatInterface = ({ initialMood, messages, onSendMessage, isLoading,
   );
 };
 
+const GlassmorphicMoodCalendar = ({ moodData = {} }: any) => {
+  const today = new Date();
+  const currentMonthName = today.toLocaleString('default', { month: 'long' });
+  const currentYear = today.getFullYear();
+  
+  const daysInMonth = new Date(currentYear, today.getMonth() + 1, 0).getDate();
+  const startingDayOfWeek = new Date(currentYear, today.getMonth(), 1).getDay();
+
+  const daysArray = Array.from({ length: daysInMonth }, (_, i) => i + 1);
+  const blankDaysArray = Array.from({ length: startingDayOfWeek }, (_, i) => i);
+
+  return (
+    <div className="w-full max-w-4xl mx-auto mt-12 p-8 rounded-3xl bg-slate-900/40 backdrop-blur-xl border border-white/10 shadow-[0_8px_32px_0_rgba(0,0,0,0.36)] relative overflow-hidden">
+      <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-teal-500/50 to-transparent"></div>
+      <div className="absolute -top-24 -right-24 w-48 h-48 bg-teal-500/20 rounded-full blur-[60px] pointer-events-none"></div>
+      
+      <div className="flex items-center justify-between mb-8 z-10 relative">
+        <h3 className="text-xl font-semibold text-slate-100 flex items-center gap-3">
+          <CalendarPlus className="w-6 h-6 text-teal-400" />
+          Mood History
+        </h3>
+        <span className="px-5 py-2 rounded-full bg-slate-800/80 border border-white/10 text-sm font-bold text-teal-300 shadow-inner">
+          {currentMonthName} {currentYear}
+        </span>
+      </div>
+
+      <div className="grid grid-cols-7 gap-3 md:gap-4 relative z-10">
+        {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+          <div key={day} className="text-center text-xs font-bold text-slate-400 mb-2 uppercase tracking-widest">
+            {day}
+          </div>
+        ))}
+        
+        {blankDaysArray.map((_, index) => (
+          <div key={`blank-${index}`} className="aspect-square"></div>
+        ))}
+
+        {daysArray.map(day => {
+          const moodDataForDay = moodData[day];
+          const isToday = day === today.getDate();
+
+          const moodDictionary: Record<string, string> = {
+            'Terrible': '😫', 'Bad': '😔', 'Okay': '😐', 'Good': '🙂', 'Great': '😁'
+          };
+
+          return (
+            <div 
+              key={day} 
+              className={`group aspect-square rounded-2xl flex flex-col items-center justify-center transition-all duration-300 relative overflow-hidden ${
+                moodDataForDay 
+                  ? `${moodDataForDay.color} border shadow-lg hover:scale-105 cursor-pointer` 
+                  : 'bg-slate-800/30 border border-white/5 text-slate-500 hover:bg-slate-800/60'
+              } ${isToday && !moodDataForDay ? 'ring-2 ring-teal-500/50 ring-offset-2 ring-offset-slate-900' : ''}`}
+            >
+              <span className={`text-sm font-medium mb-1 z-10 transition-opacity ${moodDataForDay ? 'group-hover:opacity-0' : ''} ${isToday ? 'text-teal-300 font-bold' : ''}`}>
+                {day}
+              </span>
+              
+              {moodDataForDay && (
+                <span className="text-2xl drop-shadow-md z-10 transition-opacity duration-300 group-hover:opacity-0">
+                  {moodDictionary[moodDataForDay.finalLabel]}
+                </span>
+              )}
+
+              {moodDataForDay && (
+                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-slate-900/80 backdrop-blur-md z-20 rounded-2xl">
+                  <span className="text-sm font-medium tracking-widest drop-shadow-lg whitespace-nowrap">
+                    {moodDictionary[moodDataForDay.initialLabel]} ➡️ {moodDictionary[moodDataForDay.finalLabel]}
+                  </span>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
 const MentalHealthCanvas = ({ isHistoryOpen, setIsHistoryOpen, language }: any) => {
   const [selectedMood, setSelectedMood] = useState<string | null>(null);
   const [messages, setMessages] = useState<{role: string, text: string}[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [calendarData, setCalendarData] = useState<any>({}); 
 
-  const moods = [
-    { label: 'Terrible', emoji: '😫', color: 'text-red-400', border: 'hover:border-red-500/50', bg: 'hover:bg-red-500/10' },
-    { label: 'Bad', emoji: '😔', color: 'text-orange-400', border: 'hover:border-orange-500/50', bg: 'hover:bg-orange-500/10' },
-    { label: 'Okay', emoji: '😐', color: 'text-yellow-400', border: 'hover:border-yellow-500/50', bg: 'hover:bg-yellow-500/10' },
-    { label: 'Good', emoji: '🙂', color: 'text-teal-400', border: 'hover:border-teal-500/50', bg: 'hover:bg-teal-500/10' },
-    { label: 'Great', emoji: '😁', color: 'text-green-400', border: 'hover:border-green-500/50', bg: 'hover:bg-green-500/10' }
+  const moodStyles: Record<string, any> = {
+    'Terrible': { color: 'bg-red-500/20 border-red-500/50 text-red-400', emoji: '😫', border: 'hover:border-red-500/50', bg: 'hover:bg-red-500/10' },
+    'Bad': { color: 'bg-orange-400/20 border-orange-400/50 text-orange-400', emoji: '😔', border: 'hover:border-orange-500/50', bg: 'hover:bg-orange-500/10' },
+    'Okay': { color: 'bg-yellow-400/20 border-yellow-400/50 text-yellow-400', emoji: '😐', border: 'hover:border-yellow-500/50', bg: 'hover:bg-yellow-500/10' },
+    'Good': { color: 'bg-teal-400/20 border-teal-400/50 text-teal-400', emoji: '🙂', border: 'hover:border-teal-500/50', bg: 'hover:bg-teal-500/10' },
+    'Great': { color: 'bg-green-400/20 border-green-400/50 text-green-400', emoji: '😁', border: 'hover:border-green-500/50', bg: 'hover:bg-green-500/10' }
+  };
+
+  const moodsList = [
+    { label: 'Terrible', ...moodStyles['Terrible'] },
+    { label: 'Bad', ...moodStyles['Bad'] },
+    { label: 'Okay', ...moodStyles['Okay'] },
+    { label: 'Good', ...moodStyles['Good'] },
+    { label: 'Great', ...moodStyles['Great'] }
   ];
+
+  useEffect(() => {
+    const loadMoods = async () => {
+      try {
+        const rawData = await fetchMoodHistory();
+        const formattedData: any = {};
+        
+        rawData.forEach((entry: any) => {
+          const day = parseInt(entry.recordedDate.split('-')[2], 10);
+          const style = moodStyles[entry.finalMood]; 
+          
+          if (style) {
+            formattedData[day] = { 
+              initialLabel: entry.initialMood, 
+              finalLabel: entry.finalMood, 
+              ...style 
+            };
+          }
+        });
+        
+        setCalendarData(formattedData);
+      } catch (e) {
+        console.error("Could not fetch calendar data");
+      }
+    };
+
+    if (!selectedMood) {
+      loadMoods();
+    }
+  }, [selectedMood]); 
+
+  const handleSendMessage = async (text: string) => {
+    const newHistory = [...messages, { role: 'user', text }];
+    setMessages(newHistory);
+    setIsLoading(true);
+
+    try {
+      const langCodeMap: Record<string, string> = {
+        'English': 'en', 'Hindi': 'hi', 'Gujarati': 'gu', 'Marathi': 'mr',
+        'Bengali': 'bn', 'Telugu': 'te', 'Tamil': 'ta', 'Urdu': 'ur'
+      };
+      const code = langCodeMap[language] || 'en';
+
+      const data = await sendMentalHealthMessage(newHistory, code);
+      setMessages(prev => [...prev, { role: 'ai', text: data.response }]);
+    } catch (error) {
+      setMessages(prev => [...prev, { role: 'ai', text: "I'm having trouble connecting right now, but please know I'm here for you. Let's try again in a moment." }]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSessionComplete = () => {
+    setSelectedMood(null); 
+    setMessages([]);
+  };
 
   if (!selectedMood) {
     return (
-      <div className="flex h-full w-full relative">
-        <div className="flex-1 flex flex-col items-center justify-center p-8 text-center z-10">
-          <h2 className="text-3xl font-bold text-slate-100 mb-12 drop-shadow-md">How are you feeling right now?</h2>
+      <div className="flex flex-col h-full w-full relative overflow-y-auto custom-scrollbar">
+        <div className="flex-1 flex flex-col items-center justify-start p-8 text-center z-10 min-h-max pt-20">
+          <h2 className="text-4xl font-bold text-slate-100 mb-12 drop-shadow-md tracking-tight">
+            How are you feeling right now?
+          </h2>
           
-          <div className="flex flex-wrap justify-center gap-6">
-            {moods.map((m) => (
+          <div className="flex flex-wrap justify-center gap-6 mb-16">
+            {moodsList.map((m) => (
               <button
                 key={m.label}
                 onClick={() => {
@@ -501,45 +613,19 @@ const MentalHealthCanvas = ({ isHistoryOpen, setIsHistoryOpen, language }: any) 
                 }}
                 className={`w-32 h-32 rounded-3xl bg-slate-800/40 border border-white/5 transition-all duration-300 flex flex-col items-center justify-center gap-3 ${m.border} ${m.bg} shadow-lg hover:scale-105 hover:shadow-xl`}
               >
-                <span className="text-5xl">{m.emoji}</span>
+                <span className="text-5xl drop-shadow-lg">{m.emoji}</span>
                 <span className={`font-medium ${m.color}`}>{m.label}</span>
               </button>
             ))}
           </div>
+
+          <GlassmorphicMoodCalendar moodData={calendarData} />
+          
+          <div className="h-12 w-full"></div>
         </div>
       </div>
     );
   }
-
- const handleSendMessage = async (text: string) => {
-    // Add user's message to the UI instantly
-    const newHistory = [...messages, { role: 'user', text }];
-    setMessages(newHistory);
-    setIsLoading(true);
-
-    try {
-      // Map the language to a short code, defaulting to English
-      const langCodeMap: Record<string, string> = {
-        'English': 'en', 'Hindi': 'hi', 'Gujarati': 'gu', 'Marathi': 'mr',
-        'Bengali': 'bn', 'Telugu': 'te', 'Tamil': 'ta', 'Urdu': 'ur'
-      };
-      const code = langCodeMap[language] || 'en';
-
-      // Send the ENTIRE chat history to Java
-      const data = await sendMentalHealthMessage(newHistory, code);
-      
-      // Add the real AI response to the UI
-      setMessages(prev => [...prev, { role: 'ai', text: data.response }]);
-    } catch (error) {
-      setMessages(prev => [...prev, { role: 'ai', text: "I'm having trouble connecting right now, but please know I'm here for you. Let's try again in a moment." }]);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-  const handleSessionComplete = () => {
-    setSelectedMood(null); // This instantly vaporizes the chat memory!
-    setMessages([]);
-  };
 
   return (
     <PrivateChatInterface 
@@ -561,7 +647,6 @@ const TriageCanvas = ({ isHistoryOpen, setIsHistoryOpen, language }: any) => {
   const [sessions, setSessions] = useState<any[]>([]);
   const [activeSessionId, setActiveSessionId] = useState<number | null>(null);
   
-  // NEW: State to control the delete confirmation modal
   const [sessionToDelete, setSessionToDelete] = useState<{id: number, title: string} | null>(null);
 
   const loadHistory = async () => {
@@ -586,7 +671,6 @@ const TriageCanvas = ({ isHistoryOpen, setIsHistoryOpen, language }: any) => {
     setActiveSessionId(null);      
   };
 
-  // UPDATED: This actually triggers the deletion once confirmed
   const confirmDelete = async () => {
     if (!sessionToDelete) return;
     const success = await deleteChatSession(sessionToDelete.id);
@@ -594,7 +678,7 @@ const TriageCanvas = ({ isHistoryOpen, setIsHistoryOpen, language }: any) => {
       setSessions(sessions.filter(s => s.id !== sessionToDelete.id));
       if (activeSessionId === sessionToDelete.id) handleNewSession();
     }
-    setSessionToDelete(null); // Close the modal
+    setSessionToDelete(null); 
   };
 
   const handleSelectSession = async (id: number) => {
@@ -623,13 +707,10 @@ const TriageCanvas = ({ isHistoryOpen, setIsHistoryOpen, language }: any) => {
 
     try {
       const code = langCodeMap[language] || 'en';
-      
-      // Pass the activeSessionId to the API
       const data = await sendTriageMessage(text, code, activeSessionId);
       
       setMessages(prev => [...prev, { role: 'ai', text: data.response }]);
       
-      // If this was a brand new chat, lock into the newly created room ID so the next message stays here!
       if (!activeSessionId) {
         setActiveSessionId(data.sessionId);
       }
@@ -654,12 +735,10 @@ const TriageCanvas = ({ isHistoryOpen, setIsHistoryOpen, language }: any) => {
         sessions={sessions}
         activeSessionId={activeSessionId}
         onSelectSession={handleSelectSession}
-        // UPDATED: Instead of deleting immediately, open the modal
         onDeleteSession={(id: number, title: string) => setSessionToDelete({ id, title })}
         onNewSession={handleNewSession}
       />
 
-      {/* NEW: Premium Glassmorphism Delete Modal */}
       <AnimatePresence>
         {sessionToDelete && (
           <div 
@@ -767,7 +846,6 @@ const AppointmentsCanvas = ({ isHistoryOpen, setIsHistoryOpen }: any) => {
     alert('Appointment Confirmed!');
   };
 
-  // Filter doctors based on selections
   const filteredDoctors = mockDoctors.filter(doc => {
     if (selectedState && doc.state !== selectedState) return false;
     if (selectedCity && doc.city !== selectedCity) return false;
@@ -845,7 +923,6 @@ const AppointmentsCanvas = ({ isHistoryOpen, setIsHistoryOpen }: any) => {
             <h2 className="text-2xl font-bold text-slate-100 mb-8 border-b border-white/5 pb-4">Book a Consultation</h2>
             
             <form className="space-y-6" onSubmit={handleConfirmAppointment}>
-              {/* Row 1: Location */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-slate-400">State</label>
@@ -875,7 +952,6 @@ const AppointmentsCanvas = ({ isHistoryOpen, setIsHistoryOpen }: any) => {
                 </div>
               </div>
 
-              {/* Row 2: Selection */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-slate-400">Specialization</label>
@@ -900,7 +976,6 @@ const AppointmentsCanvas = ({ isHistoryOpen, setIsHistoryOpen }: any) => {
                 </div>
               </div>
 
-              {/* Row 3: Doctor Profile Card */}
               <AnimatePresence>
                 {selectedDoctorProfile && (
                   <motion.div
@@ -926,7 +1001,6 @@ const AppointmentsCanvas = ({ isHistoryOpen, setIsHistoryOpen }: any) => {
                 )}
               </AnimatePresence>
 
-              {/* Row 4: Date & Time */}
               <div className="space-y-4 pt-2">
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-slate-400">Date</label>
@@ -958,7 +1032,6 @@ const AppointmentsCanvas = ({ isHistoryOpen, setIsHistoryOpen }: any) => {
                 </div>
               </div>
 
-              {/* Row 5: Details */}
               <div className="space-y-2 pt-2">
                 <label className="text-sm font-medium text-slate-400">Reason for visit (Symptoms/Notes)</label>
                 <textarea 
@@ -970,7 +1043,6 @@ const AppointmentsCanvas = ({ isHistoryOpen, setIsHistoryOpen }: any) => {
                 />
               </div>
 
-              {/* Footer */}
               <div className="pt-4">
                 <button 
                   type="submit"
@@ -986,8 +1058,6 @@ const AppointmentsCanvas = ({ isHistoryOpen, setIsHistoryOpen }: any) => {
     </div>
   );
 };
-
-import Profile from '../components/profile/Profile';
 
 const EditProfileCanvas = () => (
   <div className="flex-1 flex items-center justify-center p-8 text-center h-full">
@@ -1058,10 +1128,8 @@ export default function PatientDashboard() {
 
   return (
     <div className="min-h-screen bg-slate-950 flex flex-col font-sans">
-      {/* Top Header (Navbar) */}
       <header className="h-16 border-b border-white/5 bg-slate-900/50 backdrop-blur-xl flex items-center justify-between px-6 sticky top-0 z-40">
         <div className="flex items-center gap-3">
-          {/* Brand */}
           <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-teal-500 to-cyan-500 flex items-center justify-center shadow-[0_0_15px_rgba(20,184,166,0.3)]">
             <Stethoscope className="w-5 h-5 text-white" />
           </div>
@@ -1071,7 +1139,6 @@ export default function PatientDashboard() {
         </div>
 
         <div className="flex items-center gap-4">
-          {/* Language Dropdown */}
           <div className="flex items-center gap-2 bg-slate-900 border border-white/10 rounded-lg px-3 py-1.5 focus-within:ring-2 focus-within:ring-teal-500 transition-all">
             <Globe className="w-4 h-4 text-slate-400" />
             <div className="w-40">
@@ -1085,15 +1152,12 @@ export default function PatientDashboard() {
         </div>
       </header>
 
-      {/* Main Content Layout */}
       <div className="flex-1 flex flex-col md:flex-row h-[calc(100vh-4rem)] overflow-hidden">
-        {/* User Profile Sidebar (Outer Left) */}
         <motion.aside 
           animate={{ width: isNavOpen ? 256 : 80 }}
           transition={{ duration: 0.3, ease: 'easeInOut' }}
           className="border-r border-white/5 bg-slate-900/30 flex flex-col overflow-y-auto overflow-x-hidden shrink-0 z-20"
         >
-          {/* Toggle Button */}
           <div className={`p-4 flex ${isNavOpen ? 'justify-end' : 'justify-center'} border-b border-white/5`}>
             <button 
               onClick={() => setIsNavOpen(!isNavOpen)}
@@ -1171,13 +1235,10 @@ export default function PatientDashboard() {
           </div>
         </motion.aside>
 
-        {/* Main Content Area */}
         <main className="flex-1 overflow-hidden relative bg-slate-900/20 p-0 md:p-6">
           <div className="h-full bg-slate-900/40 backdrop-blur-xl md:rounded-2xl border-y md:border border-white/5 relative overflow-hidden shadow-2xl shadow-black/50">
-            {/* Subtle top reflection */}
             <div className="absolute top-0 inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-white/10 to-transparent z-10"></div>
             
-            {/* Dynamic Canvas Area with Framer Motion */}
             <AnimatePresence mode="wait">
               <motion.div
                 key={activeView}
@@ -1188,7 +1249,7 @@ export default function PatientDashboard() {
                 className="absolute inset-0 w-full h-full flex"
               >
                 {activeView === 'overview' && <OverviewCanvas onSelectView={handleFeatureSelect} />}
-                {activeView === 'mental-health' && <MentalHealthCanvas isHistoryOpen={isHistoryOpen} setIsHistoryOpen={setIsHistoryOpen} />}
+                {activeView === 'mental-health' && <MentalHealthCanvas isHistoryOpen={isHistoryOpen} setIsHistoryOpen={setIsHistoryOpen} language={language} />}
                 {activeView === 'triage' && <TriageCanvas isHistoryOpen={isHistoryOpen} setIsHistoryOpen={setIsHistoryOpen} language={language} />}
                 {activeView === 'appointments' && <AppointmentsCanvas isHistoryOpen={isHistoryOpen} setIsHistoryOpen={setIsHistoryOpen} />}
                 {activeView === 'see-profile' && <Profile />}
@@ -1200,7 +1261,6 @@ export default function PatientDashboard() {
         </main>
       </div>
 
-      {/* Delete Account Modal */}
       <AnimatePresence>
         {showDeleteModal && (
           <div 

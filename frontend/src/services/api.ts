@@ -92,3 +92,18 @@ export const sendMentalHealthMessage = async (history: {role: string, text: stri
         throw new Error("Failed to communicate with support service.");
     }
 };
+
+export const saveMoodSession = async (initialMood: string, finalMood: string) => {
+    const token = localStorage.getItem('dhanvantari_token');
+    await axios.post(`${API_BASE_URL}/mental-health/mood`, { initialMood, finalMood }, {
+        headers: { 'Authorization': `Bearer ${token}` }
+    });
+};
+// (Keep your fetchMoodHistory function exactly as it is!)
+export const fetchMoodHistory = async () => {
+    const token = localStorage.getItem('dhanvantari_token');
+    const response = await axios.get(`${API_BASE_URL}/mental-health/mood`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+    });
+    return response.data; // Returns array: [{ recordedDate: "2026-05-31", finalMood: "Good" }, ...]
+};
