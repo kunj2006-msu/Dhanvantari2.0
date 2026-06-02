@@ -2,6 +2,7 @@ import { sendTriageMessage, fetchChatHistory, deleteChatSession, fetchSessionMes
 import type { Doctor } from '../services/api';
 import { Brain, Stethoscope, CalendarPlus, User, LogOut, LayoutDashboard, Globe, Trash2, Menu, PanelLeftClose, PanelLeftOpen, Send, MapPin } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { authService } from '../services/authService';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -636,10 +637,17 @@ const MentalHealthCanvas = ({ language }: any) => {
 };
 
 const TriageCanvas = ({ isHistoryOpen, setIsHistoryOpen, language }: any) => {
-  const defaultMessage = { role: 'ai', text: "Hello. I'm here to help you assess your symptoms. Please describe what you're experiencing in as much detail as possible." };
+  const { t, i18n } = useTranslation();
+  const defaultMessage = { role: 'ai', text: t('chatbotGreeting') };
 
   const [messages, setMessages] = useState([defaultMessage]);
   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    if (messages.length === 1 && messages[0].role === 'ai') {
+      setMessages([{ role: 'ai', text: t('chatbotGreeting') }]);
+    }
+  }, [i18n.language, t]);
 
   const [sessions, setSessions] = useState<any[]>([]);
   const [activeSessionId, setActiveSessionId] = useState<number | null>(null);
@@ -779,6 +787,7 @@ const TriageCanvas = ({ isHistoryOpen, setIsHistoryOpen, language }: any) => {
   );
 };
 const AppointmentsCanvas = ({ isHistoryOpen, setIsHistoryOpen }: any) => {
+  const { t } = useTranslation();
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [selectedState, setSelectedState] = useState<string>('');
   const [selectedCity, setSelectedCity] = useState<string>('');
@@ -903,7 +912,7 @@ const AppointmentsCanvas = ({ isHistoryOpen, setIsHistoryOpen }: any) => {
             className="border-r border-white/5 bg-slate-900/40 flex flex-col overflow-hidden shrink-0 z-20"
           >
             <div className="p-4 border-b border-white/5 flex items-center justify-between min-w-[320px] h-16">
-              <h3 className="font-semibold text-slate-200">My Appointments</h3>
+              <h3 className="font-semibold text-slate-200">{t('myAppointments')}</h3>
             </div>
 
             <div className="p-4 min-w-[320px] overflow-y-auto max-h-[calc(100vh-12rem)] custom-scrollbar">
@@ -957,7 +966,7 @@ const AppointmentsCanvas = ({ isHistoryOpen, setIsHistoryOpen }: any) => {
             animate={{ opacity: 1, y: 0 }}
             className="w-full max-w-2xl bg-slate-800/40 backdrop-blur-xl border border-white/10 rounded-3xl p-6 md:p-8 shadow-2xl shadow-black/50"
           >
-            <h2 className="text-2xl font-bold text-slate-100 mb-8 border-b border-white/5 pb-4">Book a Consultation</h2>
+            <h2 className="text-2xl font-bold text-slate-100 mb-8 border-b border-white/5 pb-4">{t('bookConsultation')}</h2>
 
             <form className="space-y-6" onSubmit={handleConfirmAppointment}>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -971,7 +980,7 @@ const AppointmentsCanvas = ({ isHistoryOpen, setIsHistoryOpen }: any) => {
                       setSelectedDoctorId('');
                     }}
                     options={Object.keys(locationData)}
-                    placeholder="Select State..."
+                    placeholder={t('selectState')}
                   />
                 </div>
                 <div className="space-y-2">
@@ -983,7 +992,7 @@ const AppointmentsCanvas = ({ isHistoryOpen, setIsHistoryOpen }: any) => {
                       setSelectedDoctorId('');
                     }}
                     options={selectedState ? locationData[selectedState] : []}
-                    placeholder={selectedState ? "Select City..." : "Select State first"}
+                    placeholder={selectedState ? t('selectCity') : "Select State first"}
                     disabled={!selectedState}
                   />
                 </div>
@@ -991,7 +1000,7 @@ const AppointmentsCanvas = ({ isHistoryOpen, setIsHistoryOpen }: any) => {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-400">Specialization</label>
+                  <label className="text-sm font-medium text-slate-400">{t('specialization')}</label>
                   <CustomDropdown
                     value={selectedSpecialty}
                     onChange={(val) => {
@@ -1003,12 +1012,12 @@ const AppointmentsCanvas = ({ isHistoryOpen, setIsHistoryOpen }: any) => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-400">Doctor</label>
+                  <label className="text-sm font-medium text-slate-400">{t('doctor')}</label>
                   <CustomDropdown
                     value={selectedDoctorId}
                     onChange={(val) => setSelectedDoctorId(val)}
                     options={doctors.map(doc => ({ value: doc.id, label: `${doc.name} - ${doc.specialization}` }))}
-                    placeholder="Select Doctor..."
+                    placeholder={t('doctor') + '...'}
                   />
                 </div>
               </div>
@@ -1040,7 +1049,7 @@ const AppointmentsCanvas = ({ isHistoryOpen, setIsHistoryOpen }: any) => {
 
               <div className="space-y-4 pt-2">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-400">Date</label>
+                  <label className="text-sm font-medium text-slate-400">{t('date')}</label>
                   <CustomDatePicker
                     value={date}
                     onChange={setDate}
@@ -1098,7 +1107,7 @@ const AppointmentsCanvas = ({ isHistoryOpen, setIsHistoryOpen }: any) => {
               </div>
 
               <div className="space-y-2 pt-2">
-                <label className="text-sm font-medium text-slate-400">Intensity</label>
+                <label className="text-sm font-medium text-slate-400">{t('intensity')}</label>
                 <div className="flex gap-4">
                   {['Mild', 'Moderate', 'Severe'].map((level) => (
                     <button
@@ -1122,13 +1131,13 @@ const AppointmentsCanvas = ({ isHistoryOpen, setIsHistoryOpen }: any) => {
                   onClick={handleResetForm}
                   className="flex-1 bg-slate-800/40 hover:bg-slate-700/40 text-slate-300 font-semibold border border-white/10 hover:border-white/20 rounded-xl py-4 transition-all backdrop-blur-md"
                 >
-                  Reset Form
+                  {t('resetForm')}
                 </button>
                 <button
                   type="submit"
                   className="flex-1 bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-400 hover:to-cyan-400 text-white font-semibold rounded-xl py-4 transition-all shadow-[0_0_20px_rgba(20,184,166,0.3)] hover:shadow-[0_0_30px_rgba(20,184,166,0.5)] transform hover:-translate-y-0.5"
                 >
-                  Confirm Appointment
+                  {t('confirmAppointment')}
                 </button>
               </div>
             </form>
@@ -1241,7 +1250,7 @@ const AppointmentsCanvas = ({ isHistoryOpen, setIsHistoryOpen }: any) => {
                 </div>
                 {/* Reason for Visit */}
                 <div className="space-y-2">
-                  <h4 className="text-sm font-semibold text-slate-400 uppercase tracking-wider">Reason for Visit</h4>
+                  <h4 className="text-sm font-semibold text-slate-400 uppercase tracking-wider">{t('reasonForVisit')}</h4>
                   <div className="bg-slate-900/40 border border-white/5 p-4 rounded-2xl">
                     <p className="text-sm text-slate-300 leading-relaxed">
                       {selectedAppointment.symptomsNotes || 'No symptoms provided.'}
@@ -1293,7 +1302,7 @@ const AppointmentsCanvas = ({ isHistoryOpen, setIsHistoryOpen }: any) => {
                   onClick={() => setSelectedAppointment(null)}
                   className="w-full py-3 bg-slate-700/50 hover:bg-slate-700 text-slate-200 rounded-xl transition-colors font-medium border border-white/5 shadow-inner"
                 >
-                  Close
+                  {t('close')}
                 </button>
               </div>
             </motion.div>
@@ -1346,6 +1355,7 @@ const NavItem = ({ icon: Icon, label, active, onClick, isNavOpen, isDanger = fal
 };
 
 export default function PatientDashboard() {
+  const { i18n } = useTranslation();
   const [activeView, setActiveView] = useState<ViewState>('overview');
   const [isNavOpen, setIsNavOpen] = useState(true);
   const [isHistoryOpen, setIsHistoryOpen] = useState(true);
@@ -1365,9 +1375,15 @@ export default function PatientDashboard() {
     setIsHistoryOpen(true);
   };
 
+  const langCodeMap: Record<string, string> = {
+    'English': 'en', 'Hindi': 'hi', 'Gujarati': 'gu', 'Marathi': 'mr',
+    'Bengali': 'bn', 'Telugu': 'te', 'Tamil': 'ta', 'Urdu': 'ur', 'Kannada': 'kn',
+    'Malayalam': 'ml', 'Punjabi': 'pa', 'Odia': 'or'
+  };
+
   const languages = [
     'English', 'Hindi', 'Gujarati', 'Marathi', 'Bengali', 'Telugu',
-    'Tamil', 'Urdu', 'Kannada', 'Odia', 'Malayalam'
+    'Tamil', 'Urdu', 'Kannada', 'Odia', 'Malayalam', 'Punjabi'
   ];
 
   return (
@@ -1388,7 +1404,11 @@ export default function PatientDashboard() {
             <div className="w-40">
               <CustomDropdown
                 value={language}
-                onChange={setLanguage}
+                onChange={(val) => {
+                  setLanguage(val);
+                  const code = langCodeMap[val] || 'en';
+                  i18n.changeLanguage(code);
+                }}
                 options={languages}
               />
             </div>
