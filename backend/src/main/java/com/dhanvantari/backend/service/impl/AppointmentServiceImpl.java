@@ -91,6 +91,11 @@ public class AppointmentServiceImpl implements AppointmentService {
                         .date(apt.getScheduledTime().format(dateFormatter))
                         .time(apt.getScheduledTime().format(timeFormatter))
                         .status(apt.getStatus() == AppointmentStatus.SCHEDULED ? "upcoming" : apt.getStatus().name().toLowerCase())
+                        .clinicAddress(apt.getDoctor().getClinicAddress())
+                        .latitude(apt.getDoctor().getLatitude())
+                        .longitude(apt.getDoctor().getLongitude())
+                        .doctorNotes(apt.getDoctorNotes())
+                        .symptomsNotes(apt.getSymptomsNotes())
                         .build())
                 .collect(Collectors.toList());
     }

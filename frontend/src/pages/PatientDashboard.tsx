@@ -791,7 +791,8 @@ const AppointmentsCanvas = ({ isHistoryOpen, setIsHistoryOpen }: any) => {
   const [doctors, setDoctors] = useState<Doctor[]>([]);
 
   const [appointments, setAppointments] = useState<any[]>([]);
-  const [alertConfig, setAlertConfig] = useState<{show: boolean, type: 'success'|'error'|'warning', message: string} | null>(null);
+  const [alertConfig, setAlertConfig] = useState<{ show: boolean, type: 'success' | 'error' | 'warning', message: string } | null>(null);
+  const [selectedAppointment, setSelectedAppointment] = useState<any | null>(null);
 
   const loadAppointments = async () => {
     const data = await fetchAppointments();
@@ -911,7 +912,11 @@ const AppointmentsCanvas = ({ isHistoryOpen, setIsHistoryOpen }: any) => {
                   <div className="text-slate-500 text-sm text-center mt-10 italic">No appointments booked</div>
                 ) : (
                   appointments.map((apt) => (
-                    <div key={apt.id} className="p-4 rounded-xl bg-slate-800/40 border border-white/5 hover:bg-slate-800/60 transition-colors group">
+                    <div
+                      key={apt.id}
+                      onClick={() => setSelectedAppointment(apt)}
+                      className="p-4 rounded-xl bg-slate-800/40 border border-white/5 hover:bg-slate-800/50 cursor-pointer transition-colors group"
+                    >
                       <div className="flex justify-between items-start mb-2">
                         <h4 className="font-semibold text-slate-200">{apt.doctorName}</h4>
                         <span className={`text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-full ${apt.status === 'upcoming'
@@ -1146,17 +1151,15 @@ const AppointmentsCanvas = ({ isHistoryOpen, setIsHistoryOpen }: any) => {
               className="bg-slate-800/90 border border-white/10 rounded-3xl p-8 max-w-md w-full mx-4 shadow-2xl text-center relative overflow-hidden"
             >
               {/* Decorative top accent line */}
-              <div className={`absolute top-0 left-0 w-full h-1.5 ${
-                alertConfig.type === 'success' ? 'bg-emerald-500' :
+              <div className={`absolute top-0 left-0 w-full h-1.5 ${alertConfig.type === 'success' ? 'bg-emerald-500' :
                 alertConfig.type === 'warning' ? 'bg-amber-500' :
-                'bg-red-500'
-              }`} />
-              
-              <div className={`w-16 h-16 rounded-full mx-auto mb-4 border flex items-center justify-center ${
-                alertConfig.type === 'success' ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' :
+                  'bg-red-500'
+                }`} />
+
+              <div className={`w-16 h-16 rounded-full mx-auto mb-4 border flex items-center justify-center ${alertConfig.type === 'success' ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' :
                 alertConfig.type === 'warning' ? 'bg-amber-500/10 border-amber-500/30 text-amber-400' :
-                'bg-red-500/10 border-red-500/30 text-red-400'
-              }`}>
+                  'bg-red-500/10 border-red-500/30 text-red-400'
+                }`}>
                 {alertConfig.type === 'success' ? (
                   <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
@@ -1181,14 +1184,118 @@ const AppointmentsCanvas = ({ isHistoryOpen, setIsHistoryOpen }: any) => {
 
               <button
                 onClick={() => setAlertConfig(null)}
-                className={`w-full py-3 rounded-xl font-semibold transition-all shadow-md ${
-                  alertConfig.type === 'success' ? 'bg-emerald-500 hover:bg-emerald-400 text-white shadow-emerald-500/20' :
+                className={`w-full py-3 rounded-xl font-semibold transition-all shadow-md ${alertConfig.type === 'success' ? 'bg-emerald-500 hover:bg-emerald-400 text-white shadow-emerald-500/20' :
                   alertConfig.type === 'warning' ? 'bg-amber-500 hover:bg-amber-400 text-white shadow-amber-500/20' :
-                  'bg-red-500 hover:bg-red-400 text-white shadow-red-500/20'
-                }`}
+                    'bg-red-500 hover:bg-red-400 text-white shadow-red-500/20'
+                  }`}
               >
                 Okay
               </button>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Appointment Details Modal */}
+      <AnimatePresence>
+        {selectedAppointment && (
+          <div
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center"
+            onClick={() => setSelectedAppointment(null)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              // ADD THE 3 CLASSES RIGHT HERE:
+              className="relative bg-slate-900/90 backdrop-blur-xl border border-white/10 p-6 md:p-8 rounded-3xl w-full max-w-lg shadow-2xl z-50 max-h-[85vh] overflow-y-auto custom-scrollbar"
+            >
+              {/* Top decoration glow */}
+              <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-teal-500 to-cyan-500" />
+
+              <div className="flex justify-between items-start mb-6">
+                <div>
+                  <h3 className="text-2xl font-bold text-slate-100">{selectedAppointment.doctorName}</h3>
+                  <p className="text-slate-400 text-sm mt-0.5">{selectedAppointment.specialty}</p>
+                </div>
+                <span className={`text-[10px] uppercase tracking-wider font-bold px-3 py-1 rounded-full ${selectedAppointment.status === 'upcoming'
+                  ? 'bg-teal-500/20 text-teal-400 border border-teal-500/30'
+                  : 'bg-slate-700/50 text-slate-400 border border-white/5'
+                  }`}>
+                  {selectedAppointment.status}
+                </span>
+              </div>
+
+              <div className="space-y-6 text-slate-300">
+                {/* Date & Time */}
+                <div className="bg-slate-900/40 border border-white/5 p-4 rounded-2xl flex items-center gap-3">
+                  <div className="w-10 h-10 bg-teal-500/10 rounded-xl flex items-center justify-center border border-teal-500/20">
+                    <CalendarPlus className="w-5 h-5 text-teal-400" />
+                  </div>
+                  <div>
+                    <div className="text-xs text-slate-500">Scheduled Time</div>
+                    <div className="font-semibold text-slate-200">
+                      {selectedAppointment.date} &bull; {selectedAppointment.time}
+                    </div>
+                  </div>
+                </div>
+                {/* Reason for Visit */}
+                <div className="space-y-2">
+                  <h4 className="text-sm font-semibold text-slate-400 uppercase tracking-wider">Reason for Visit</h4>
+                  <div className="bg-slate-900/40 border border-white/5 p-4 rounded-2xl">
+                    <p className="text-sm text-slate-300 leading-relaxed">
+                      {selectedAppointment.symptomsNotes || 'No symptoms provided.'}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Clinic Location */}
+                <div className="space-y-2">
+                  <h4 className="text-sm font-semibold text-slate-400 uppercase tracking-wider">Clinic Location</h4>
+                  <div className="bg-slate-900/40 border border-white/5 p-4 rounded-2xl space-y-3">
+                    <div className="flex items-start gap-2.5">
+                      <MapPin className="w-5 h-5 text-slate-400 shrink-0 mt-0.5" />
+                      <span className="text-sm leading-relaxed">{selectedAppointment.clinicAddress || 'Address not available'}</span>
+                    </div>
+                    {selectedAppointment.latitude !== null && selectedAppointment.longitude !== null && (
+                      <a
+                        href={`https://www.google.com/maps/search/?api=1&query=${selectedAppointment.latitude},${selectedAppointment.longitude}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2 text-teal-400 hover:text-teal-300 transition-colors text-sm font-semibold pl-7"
+                      >
+                        <Globe className="w-4 h-4" />
+                        Open in Google Maps
+                      </a>
+                    )}
+                  </div>
+                </div>
+
+                {/* Doctor's Notes (Conditional: only if status is completed) */}
+                {selectedAppointment.status === 'completed' && (
+                  <div className="space-y-2">
+                    <h4 className="text-sm font-semibold text-slate-400 uppercase tracking-wider">Doctor's Notes & Precautions</h4>
+                    <div className="bg-slate-900/40 border border-white/5 p-4 rounded-2xl">
+                      {selectedAppointment.doctorNotes ? (
+                        <p className="text-sm text-slate-300 whitespace-pre-wrap leading-relaxed">
+                          {selectedAppointment.doctorNotes}
+                        </p>
+                      ) : (
+                        <p className="text-sm text-slate-500 italic">No notes provided by the doctor yet.</p>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="mt-8">
+                <button
+                  onClick={() => setSelectedAppointment(null)}
+                  className="w-full py-3 bg-slate-700/50 hover:bg-slate-700 text-slate-200 rounded-xl transition-colors font-medium border border-white/5 shadow-inner"
+                >
+                  Close
+                </button>
+              </div>
             </motion.div>
           </div>
         )}

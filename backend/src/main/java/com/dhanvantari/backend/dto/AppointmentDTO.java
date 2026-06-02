@@ -14,4 +14,9 @@ public class AppointmentDTO {
     private String date; // formatted as DD/MM/YYYY
     private String time; // formatted as hh:mm a
     private String status;
+    private String clinicAddress;
+    private Double latitude;
+    private Double longitude;
+    private String doctorNotes;
+    private String symptomsNotes;
 }

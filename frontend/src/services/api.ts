@@ -171,6 +171,11 @@ export interface Appointment {
     date: string; // DD/MM/YYYY
     time: string; // hh:mm a
     status: string;
+    clinicAddress: string;
+    latitude: number;
+    longitude: number;
+    doctorNotes: string | null;
+    symptomsNotes: string;
 }
 
 export const fetchAppointments = async (): Promise<Appointment[]> => {

@@ -43,6 +43,9 @@ public class Appointment {
     @Column(name = "symptoms_notes", columnDefinition = "TEXT")
     private String symptomsNotes;
 
+    @Column(name = "doctor_notes", columnDefinition = "TEXT")
+    private String doctorNotes;
+
     @Version
     @Column(nullable = false)
     @Builder.Default
