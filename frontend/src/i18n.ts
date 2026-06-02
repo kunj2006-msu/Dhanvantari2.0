@@ -17,7 +17,19 @@ const resources = {
       confirmAppointment: "Confirm Appointment",
       resetForm: "Reset Form",
       close: "Close",
-      chatbotGreeting: "Hello. I'm here to help you assess your symptoms. Please describe what you're experiencing in as much detail as possible."
+      chatbotGreeting: "Hello. I'm here to help you assess your symptoms. Please describe what you're experiencing in as much detail as possible.",
+      stateLabel: "State",
+      cityLabel: "City",
+      availableTimeSlots: "Available Time Slots",
+      primarySymptom: "Primary Symptom",
+      duration: "Duration",
+      mild: "Mild",
+      moderate: "Moderate",
+      severe: "Severe",
+      selectCityFirst: "Select City first",
+      anySpecialization: "Any Specialization...",
+      selectDoctor: "Select Doctor...",
+      mentalHealthGreeting: "I see you're feeling {{mood}} today. This is a safe space, and I'm here to listen without judgment. What's on your mind?"
     }
   },
   hi: {
@@ -35,7 +47,19 @@ const resources = {
       confirmAppointment: "अपॉइंटमेंट की पुष्टि करें",
       resetForm: "फॉर्म रीसेट करें",
       close: "बंद करें",
-      chatbotGreeting: "नमस्ते। मैं आपके लक्षणों का आकलन करने में आपकी सहायता के लिए यहाँ हूँ। कृपया जितना संभव हो उतने विस्तार से बताएं कि आप क्या अनुभव कर रहे हैं।"
+      chatbotGreeting: "नमस्ते। मैं आपके लक्षणों का आकलन करने में आपकी सहायता के लिए यहाँ हूँ। कृपया जितना संभव हो उतने विस्तार से बताएं कि आप क्या अनुभव कर रहे हैं।" ,
+      stateLabel: "राज्य",
+      cityLabel: "शहर",
+      availableTimeSlots: "उपलब्ध समय स्लॉट",
+      primarySymptom: "प्राथमिक लक्षण",
+      duration: "अवधि",
+      mild: "हल्का",
+      moderate: "मध्यम",
+      severe: "गंभीर",
+      selectCityFirst: "पहले शहर चुनें",
+      anySpecialization: "कोई भी विशेषज्ञता...",
+      selectDoctor: "डॉक्टर चुनें...",
+      mentalHealthGreeting: "मुझे दिख रहा है कि आप आज {{mood}} महसूस कर रहे हैं। यह एक सुरक्षित स्थान है, और मैं यहाँ बिना किसी निर्णय के सुनने के लिए हूँ। आपके मन में क्या है?"
     }
   },
   gu: {
@@ -53,7 +77,19 @@ const resources = {
       confirmAppointment: "અપૉઇન્ટમેન્ટ કન્ફર્મ કરો",
       resetForm: "ફોર્મ રીસેટ કરો",
       close: "બંધ કરો",
-      chatbotGreeting: "નમસ્તે. હું તમારા લક્ષણોનું મૂલ્યાંકન કરવામાં તમારી મદદ કરવા માટે અહીં છું. તમે જે અનુભવી રહ્યા છો તેનું કૃપા કરીને શક્ય તેટલી વિગતવાર વર્ણન કરો."
+      chatbotGreeting: "નમસ્તે. હું તમારા લક્ષણોનું મૂલ્યાંકન કરવામાં તમારી મદદ કરવા માટે અહીં છું. તમે જે અનુભવી રહ્યા છો તેનું કૃપા કરીને શક્ય તેટલી વિગતવાર વર્ણન કરો.",
+      stateLabel: "રાજ્ય",
+      cityLabel: "શહેર",
+      availableTimeSlots: "ઉપલબ્ધ સમય સ્લોટ્સ",
+      primarySymptom: "મુખ્ય લક્ષણ",
+      duration: "સમયગાળો",
+      mild: "હળવું",
+      moderate: "મધ્યમ",
+      severe: "ગંભીર",
+      selectCityFirst: "પહેલા શહેર પસંદ કરો",
+      anySpecialization: "કોઈપણ સ્પેશિયલાઇઝેશન...",
+      selectDoctor: "ડોક્ટર પસંદ કરો...",
+      mentalHealthGreeting: "હું જોઈ શકું છું કે તમે આજે {{mood}} અનુભવી રહ્યા છો. આ એક સુરક્ષિત સ્થાન છે, અને હું અહીં કોઈ પણ જજમેન્ટ વગર સાંભળવા માટે છું. તમારા મનમાં શું છે?"
     }
   },
   mr: {
@@ -71,7 +107,19 @@ const resources = {
       confirmAppointment: "Confirm Appointment",
       resetForm: "Reset Form",
       close: "Close",
-      chatbotGreeting: "Hello. I'm here to help you assess your symptoms. Please describe what you're experiencing in as much detail as possible."
+      chatbotGreeting: "Hello. I'm here to help you assess your symptoms. Please describe what you're experiencing in as much detail as possible.",
+      stateLabel: "State",
+      cityLabel: "City",
+      availableTimeSlots: "Available Time Slots",
+      primarySymptom: "Primary Symptom",
+      duration: "Duration",
+      mild: "Mild",
+      moderate: "Moderate",
+      severe: "Severe",
+      selectCityFirst: "Select City first",
+      anySpecialization: "Any Specialization...",
+      selectDoctor: "Select Doctor...",
+      mentalHealthGreeting: "I see you're feeling {{mood}} today. This is a safe space, and I'm here to listen without judgment. What's on your mind?"
     }
   },
   bn: {
@@ -89,7 +137,19 @@ const resources = {
       confirmAppointment: "Confirm Appointment",
       resetForm: "Reset Form",
       close: "Close",
-      chatbotGreeting: "Hello. I'm here to help you assess your symptoms. Please describe what you're experiencing in as much detail as possible."
+      chatbotGreeting: "Hello. I'm here to help you assess your symptoms. Please describe what you're experiencing in as much detail as possible.",
+      stateLabel: "State",
+      cityLabel: "City",
+      availableTimeSlots: "Available Time Slots",
+      primarySymptom: "Primary Symptom",
+      duration: "Duration",
+      mild: "Mild",
+      moderate: "Moderate",
+      severe: "Severe",
+      selectCityFirst: "Select City first",
+      anySpecialization: "Any Specialization...",
+      selectDoctor: "Select Doctor...",
+      mentalHealthGreeting: "I see you're feeling {{mood}} today. This is a safe space, and I'm here to listen without judgment. What's on your mind?"
     }
   },
   te: {
@@ -107,7 +167,19 @@ const resources = {
       confirmAppointment: "Confirm Appointment",
       resetForm: "Reset Form",
       close: "Close",
-      chatbotGreeting: "Hello. I'm here to help you assess your symptoms. Please describe what you're experiencing in as much detail as possible."
+      chatbotGreeting: "Hello. I'm here to help you assess your symptoms. Please describe what you're experiencing in as much detail as possible.",
+      stateLabel: "State",
+      cityLabel: "City",
+      availableTimeSlots: "Available Time Slots",
+      primarySymptom: "Primary Symptom",
+      duration: "Duration",
+      mild: "Mild",
+      moderate: "Moderate",
+      severe: "Severe",
+      selectCityFirst: "Select City first",
+      anySpecialization: "Any Specialization...",
+      selectDoctor: "Select Doctor...",
+      mentalHealthGreeting: "I see you're feeling {{mood}} today. This is a safe space, and I'm here to listen without judgment. What's on your mind?"
     }
   },
   ta: {
@@ -125,7 +197,19 @@ const resources = {
       confirmAppointment: "Confirm Appointment",
       resetForm: "Reset Form",
       close: "Close",
-      chatbotGreeting: "Hello. I'm here to help you assess your symptoms. Please describe what you're experiencing in as much detail as possible."
+      chatbotGreeting: "Hello. I'm here to help you assess your symptoms. Please describe what you're experiencing in as much detail as possible.",
+      stateLabel: "State",
+      cityLabel: "City",
+      availableTimeSlots: "Available Time Slots",
+      primarySymptom: "Primary Symptom",
+      duration: "Duration",
+      mild: "Mild",
+      moderate: "Moderate",
+      severe: "Severe",
+      selectCityFirst: "Select City first",
+      anySpecialization: "Any Specialization...",
+      selectDoctor: "Select Doctor...",
+      mentalHealthGreeting: "I see you're feeling {{mood}} today. This is a safe space, and I'm here to listen without judgment. What's on your mind?"
     }
   },
   kn: {
@@ -143,7 +227,19 @@ const resources = {
       confirmAppointment: "Confirm Appointment",
       resetForm: "Reset Form",
       close: "Close",
-      chatbotGreeting: "Hello. I'm here to help you assess your symptoms. Please describe what you're experiencing in as much detail as possible."
+      chatbotGreeting: "Hello. I'm here to help you assess your symptoms. Please describe what you're experiencing in as much detail as possible.",
+      stateLabel: "State",
+      cityLabel: "City",
+      availableTimeSlots: "Available Time Slots",
+      primarySymptom: "Primary Symptom",
+      duration: "Duration",
+      mild: "Mild",
+      moderate: "Moderate",
+      severe: "Severe",
+      selectCityFirst: "Select City first",
+      anySpecialization: "Any Specialization...",
+      selectDoctor: "Select Doctor...",
+      mentalHealthGreeting: "I see you're feeling {{mood}} today. This is a safe space, and I'm here to listen without judgment. What's on your mind?"
     }
   },
   ml: {
@@ -161,7 +257,19 @@ const resources = {
       confirmAppointment: "Confirm Appointment",
       resetForm: "Reset Form",
       close: "Close",
-      chatbotGreeting: "Hello. I'm here to help you assess your symptoms. Please describe what you're experiencing in as much detail as possible."
+      chatbotGreeting: "Hello. I'm here to help you assess your symptoms. Please describe what you're experiencing in as much detail as possible.",
+      stateLabel: "State",
+      cityLabel: "City",
+      availableTimeSlots: "Available Time Slots",
+      primarySymptom: "Primary Symptom",
+      duration: "Duration",
+      mild: "Mild",
+      moderate: "Moderate",
+      severe: "Severe",
+      selectCityFirst: "Select City first",
+      anySpecialization: "Any Specialization...",
+      selectDoctor: "Select Doctor...",
+      mentalHealthGreeting: "I see you're feeling {{mood}} today. This is a safe space, and I'm here to listen without judgment. What's on your mind?"
     }
   },
   pa: {
@@ -179,7 +287,19 @@ const resources = {
       confirmAppointment: "Confirm Appointment",
       resetForm: "Reset Form",
       close: "Close",
-      chatbotGreeting: "Hello. I'm here to help you assess your symptoms. Please describe what you're experiencing in as much detail as possible."
+      chatbotGreeting: "Hello. I'm here to help you assess your symptoms. Please describe what you're experiencing in as much detail as possible.",
+      stateLabel: "State",
+      cityLabel: "City",
+      availableTimeSlots: "Available Time Slots",
+      primarySymptom: "Primary Symptom",
+      duration: "Duration",
+      mild: "Mild",
+      moderate: "Moderate",
+      severe: "Severe",
+      selectCityFirst: "Select City first",
+      anySpecialization: "Any Specialization...",
+      selectDoctor: "Select Doctor...",
+      mentalHealthGreeting: "I see you're feeling {{mood}} today. This is a safe space, and I'm here to listen without judgment. What's on your mind?"
     }
   },
   ur: {
@@ -197,7 +317,19 @@ const resources = {
       confirmAppointment: "Confirm Appointment",
       resetForm: "Reset Form",
       close: "Close",
-      chatbotGreeting: "Hello. I'm here to help you assess your symptoms. Please describe what you're experiencing in as much detail as possible."
+      chatbotGreeting: "Hello. I'm here to help you assess your symptoms. Please describe what you're experiencing in as much detail as possible.",
+      stateLabel: "State",
+      cityLabel: "City",
+      availableTimeSlots: "Available Time Slots",
+      primarySymptom: "Primary Symptom",
+      duration: "Duration",
+      mild: "Mild",
+      moderate: "Moderate",
+      severe: "Severe",
+      selectCityFirst: "Select City first",
+      anySpecialization: "Any Specialization...",
+      selectDoctor: "Select Doctor...",
+      mentalHealthGreeting: "I see you're feeling {{mood}} today. This is a safe space, and I'm here to listen without judgment. What's on your mind?"
     }
   },
   or: {
@@ -215,7 +347,19 @@ const resources = {
       confirmAppointment: "Confirm Appointment",
       resetForm: "Reset Form",
       close: "Close",
-      chatbotGreeting: "Hello. I'm here to help you assess your symptoms. Please describe what you're experiencing in as much detail as possible."
+      chatbotGreeting: "Hello. I'm here to help you assess your symptoms. Please describe what you're experiencing in as much detail as possible.",
+      stateLabel: "State",
+      cityLabel: "City",
+      availableTimeSlots: "Available Time Slots",
+      primarySymptom: "Primary Symptom",
+      duration: "Duration",
+      mild: "Mild",
+      moderate: "Moderate",
+      severe: "Severe",
+      selectCityFirst: "Select City first",
+      anySpecialization: "Any Specialization...",
+      selectDoctor: "Select Doctor...",
+      mentalHealthGreeting: "I see you're feeling {{mood}} today. This is a safe space, and I'm here to listen without judgment. What's on your mind?"
     }
   }
 };

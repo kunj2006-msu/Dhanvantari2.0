@@ -513,10 +513,20 @@ const GlassmorphicMoodCalendar = ({ moodData = {} }: any) => {
 };
 
 const MentalHealthCanvas = ({ language }: any) => {
+  const { t, i18n } = useTranslation();
   const [selectedMood, setSelectedMood] = useState<string | null>(null);
   const [messages, setMessages] = useState<{ role: string, text: string }[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [calendarData, setCalendarData] = useState<any>({});
+
+  useEffect(() => {
+    if (messages.length === 1 && messages[0].role === 'ai' && selectedMood) {
+      setMessages([{
+        role: 'ai',
+        text: t('mentalHealthGreeting', { mood: selectedMood.toLowerCase() })
+      }]);
+    }
+  }, [i18n.language, selectedMood, t]);
 
   const moodStyles: Record<string, any> = {
     'Terrible': { color: 'bg-red-500/20 border-red-500/50 text-red-400', emoji: '😫', border: 'hover:border-red-500/50', bg: 'hover:bg-red-500/10' },
@@ -606,7 +616,7 @@ const MentalHealthCanvas = ({ language }: any) => {
                   setSelectedMood(m.label);
                   setMessages([{
                     role: 'ai',
-                    text: `I see you're feeling ${m.label.toLowerCase()} today. This is a safe space, and I'm here to listen without judgment. What's on your mind?`
+                    text: t('mentalHealthGreeting', { mood: m.label.toLowerCase() })
                   }]);
                 }}
                 className={`w-32 h-32 rounded-3xl bg-slate-800/40 border border-white/5 transition-all duration-300 flex flex-col items-center justify-center gap-3 ${m.border} ${m.bg} shadow-lg hover:scale-105 hover:shadow-xl`}
@@ -971,7 +981,7 @@ const AppointmentsCanvas = ({ isHistoryOpen, setIsHistoryOpen }: any) => {
             <form className="space-y-6" onSubmit={handleConfirmAppointment}>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-400">State</label>
+                  <label className="text-sm font-medium text-slate-400">{t('stateLabel')}</label>
                   <CustomDropdown
                     value={selectedState}
                     onChange={(val) => {
@@ -984,7 +994,7 @@ const AppointmentsCanvas = ({ isHistoryOpen, setIsHistoryOpen }: any) => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-400">City</label>
+                  <label className="text-sm font-medium text-slate-400">{t('cityLabel')}</label>
                   <CustomDropdown
                     value={selectedCity}
                     onChange={(val) => {
@@ -992,7 +1002,7 @@ const AppointmentsCanvas = ({ isHistoryOpen, setIsHistoryOpen }: any) => {
                       setSelectedDoctorId('');
                     }}
                     options={selectedState ? locationData[selectedState] : []}
-                    placeholder={selectedState ? t('selectCity') : "Select State first"}
+                    placeholder={selectedState ? t('selectCity') : t('selectCityFirst')}
                     disabled={!selectedState}
                   />
                 </div>
@@ -1008,7 +1018,7 @@ const AppointmentsCanvas = ({ isHistoryOpen, setIsHistoryOpen }: any) => {
                       setSelectedDoctorId('');
                     }}
                     options={['General Physician', 'Cardiologist', 'Dermatologist']}
-                    placeholder="Any Specialization..."
+                    placeholder={t('anySpecialization')}
                   />
                 </div>
                 <div className="space-y-2">
@@ -1017,7 +1027,7 @@ const AppointmentsCanvas = ({ isHistoryOpen, setIsHistoryOpen }: any) => {
                     value={selectedDoctorId}
                     onChange={(val) => setSelectedDoctorId(val)}
                     options={doctors.map(doc => ({ value: doc.id, label: `${doc.name} - ${doc.specialization}` }))}
-                    placeholder={t('doctor') + '...'}
+                    placeholder={t('selectDoctor')}
                   />
                 </div>
               </div>
@@ -1058,7 +1068,7 @@ const AppointmentsCanvas = ({ isHistoryOpen, setIsHistoryOpen }: any) => {
                 </div>
 
                 <div className="space-y-2 pt-2">
-                  <label className="text-sm font-medium text-slate-400 mb-2 block">Available Time Slots</label>
+                  <label className="text-sm font-medium text-slate-400 mb-2 block">{t('availableTimeSlots')}</label>
                   <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3">
                     {availableTimeSlots.length > 0 ? (
                       availableTimeSlots.map(time => (
@@ -1085,7 +1095,7 @@ const AppointmentsCanvas = ({ isHistoryOpen, setIsHistoryOpen }: any) => {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-400">Primary Symptom</label>
+                  <label className="text-sm font-medium text-slate-400">{t('primarySymptom')}</label>
                   <input
                     type="text"
                     value={primarySymptom}
@@ -1095,7 +1105,7 @@ const AppointmentsCanvas = ({ isHistoryOpen, setIsHistoryOpen }: any) => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-400">Duration</label>
+                  <label className="text-sm font-medium text-slate-400">{t('duration')}</label>
                   <input
                     type="text"
                     value={duration}
@@ -1119,7 +1129,7 @@ const AppointmentsCanvas = ({ isHistoryOpen, setIsHistoryOpen }: any) => {
                         : 'bg-slate-800/50 border-white/5 text-slate-400 hover:bg-slate-700/50 hover:text-slate-200'
                         }`}
                     >
-                      {level}
+                      {t(level.toLowerCase())}
                     </button>
                   ))}
                 </div>
