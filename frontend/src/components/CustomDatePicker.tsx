@@ -117,7 +117,7 @@ export const CustomDatePicker = ({ value, onChange, minDate, placeholder = "Sele
         className="bg-slate-800/50 border border-white/10 text-slate-200 rounded-xl px-4 py-3 flex justify-between items-center cursor-none focus-within:ring-2 focus-within:ring-teal-500/50 w-full"
         onClick={() => setIsOpen(!isOpen)}
       >
-        <span className={!value ? "text-slate-500" : ""}>{value || placeholder}</span>
+        <span className={!value ? "text-slate-500" : ""}>{value ? value.replace(/-/g, '/') : placeholder}</span>
         <CalendarIcon className="w-4 h-4 text-slate-400" />
       </div>
 

@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:8080/api/patient/chat'; 
+const API_BASE_URL = 'http://localhost:8080/api/patient/chat';
 
 // UPDATED: Now accepts sessionId
 export const sendTriageMessage = async (message: string, language: string, sessionId: number | null = null) => {
@@ -9,7 +9,7 @@ export const sendTriageMessage = async (message: string, language: string, sessi
         if (!token || token === 'null' || token === 'undefined') {
             throw new Error("You are not authenticated. Please log in again.");
         }
-        
+
         const response = await axios.post(`${API_BASE_URL}/triage`, {
             message: message,
             language: language,
@@ -19,9 +19,9 @@ export const sendTriageMessage = async (message: string, language: string, sessi
                 'Authorization': `Bearer ${token}`
             }
         });
-        
+
         // Java now returns { response: "...", sessionId: 123 }
-        return response.data; 
+        return response.data;
     } catch (error) {
         console.error("Error sending triage message:", error);
         throw new Error("Failed to communicate with the triage service.");
@@ -31,13 +31,13 @@ export const sendTriageMessage = async (message: string, language: string, sessi
 export const fetchChatHistory = async () => {
     const token = localStorage.getItem('dhanvantari_token');
     if (!token) return [];
-    
+
     try {
         const response = await axios.get(`${API_BASE_URL}/sessions`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
         // 🕵️ DETECTIVE LOG: Print the exact data from Java to the browser console
-        console.log("DATA FROM JAVA BACKEND:", response.data); 
+        console.log("DATA FROM JAVA BACKEND:", response.data);
         return response.data;
     } catch (error) {
         console.error("Error fetching history:", error);
@@ -49,7 +49,7 @@ export const fetchChatHistory = async () => {
 export const deleteChatSession = async (sessionId: number) => {
     const token = localStorage.getItem('dhanvantari_token');
     if (!token) return false;
-    
+
     try {
         await axios.delete(`${API_BASE_URL}/sessions/${sessionId}`, {
             headers: { 'Authorization': `Bearer ${token}` }
@@ -65,7 +65,7 @@ export const deleteChatSession = async (sessionId: number) => {
 export const fetchSessionMessages = async (sessionId: number) => {
     const token = localStorage.getItem('dhanvantari_token');
     if (!token) return [];
-    
+
     try {
         const response = await axios.get(`${API_BASE_URL}/sessions/${sessionId}/messages`, {
             headers: { 'Authorization': `Bearer ${token}` }
@@ -77,7 +77,7 @@ export const fetchSessionMessages = async (sessionId: number) => {
     }
 };
 
-export const sendMentalHealthMessage = async (history: {role: string, text: string}[], language: string) => {
+export const sendMentalHealthMessage = async (history: { role: string, text: string }[], language: string) => {
     try {
         const token = localStorage.getItem('dhanvantari_token');
         const response = await axios.post(`${API_BASE_URL}/mental-health/chat`, {
@@ -106,4 +106,86 @@ export const fetchMoodHistory = async () => {
         headers: { 'Authorization': `Bearer ${token}` }
     });
     return response.data; // Returns array: [{ recordedDate: "2026-05-31", finalMood: "Good" }, ...]
+};
+
+export interface Doctor {
+    id: string;
+    name: string;
+    specialization: string;
+    state: string;
+    city: string;
+    experience: string;
+    clinicAddress: string;
+    latitude?: number;
+    longitude?: number;
+}
+
+export const fetchDoctors = async (state?: string, city?: string, specialization?: string): Promise<Doctor[]> => {
+    const token = localStorage.getItem('dhanvantari_token');
+    if (!token) return [];
+
+    try {
+        const params = new URLSearchParams();
+        if (state) params.append('state', state);
+        if (city) params.append('city', city);
+        if (specialization) params.append('specialization', specialization);
+
+        const response = await axios.get(`http://localhost:8080/api/patient/doctors?${params.toString()}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Error fetching doctors:", error);
+        return [];
+    }
+};
+
+export interface AppointmentPayload {
+    doctorId: string;
+    scheduledDate: string; // YYYY-MM-DD
+    scheduledTime: string; // hh:mm AM/PM
+    symptomsNotes: string;
+}
+
+export const bookAppointment = async (payload: AppointmentPayload): Promise<{ message: string }> => {
+    const token = localStorage.getItem('dhanvantari_token');
+    if (!token || token === 'null' || token === 'undefined') {
+        throw new Error("You are not authenticated. Please log in again.");
+    }
+
+    try {
+        const response = await axios.post('http://localhost:8080/api/patient/appointments/book', payload, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Error booking appointment:", error);
+        throw new Error("Failed to book appointment.");
+    }
+};
+
+export interface Appointment {
+    id: string;
+    doctorName: string;
+    specialty: string;
+    date: string; // DD/MM/YYYY
+    time: string; // hh:mm a
+    status: string;
+}
+
+export const fetchAppointments = async (): Promise<Appointment[]> => {
+    const token = localStorage.getItem('dhanvantari_token');
+    if (!token || token === 'null' || token === 'undefined') {
+        return [];
+    }
+
+    try {
+        const response = await axios.get('http://localhost:8080/api/patient/appointments', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Error fetching appointments:", error);
+        return [];
+    }
 };

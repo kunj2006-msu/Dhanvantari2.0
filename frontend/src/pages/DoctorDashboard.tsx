@@ -1,4 +1,4 @@
-import { Calendar, Users, Settings, LogOut, Stethoscope, Menu, Globe, Clock, User, FileText, Send, Trash2 } from 'lucide-react';
+import { Calendar, Users, LogOut, Stethoscope, Menu, Globe, Clock, User, FileText, Send, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authService } from '../services/authService';
@@ -25,7 +25,7 @@ const mockAppointments: Appointment[] = [
   { id: 3, patientName: 'Amit Patel', time: '02:00 PM', reason: 'Follow-up for Hypertension', age: 52, gender: 'Male', bloodGroup: 'B+', pastHistory: 'Hypertension diagnosed in 2024.' },
 ];
 
-const ScheduleCanvas = ({ isHistoryOpen, setIsHistoryOpen }: any) => {
+const ScheduleCanvas = ({ isHistoryOpen }: any) => {
   const [selectedPatient, setSelectedPatient] = useState<Appointment | null>(null);
   const [notes, setNotes] = useState('');
 

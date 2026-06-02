@@ -1,5 +1,6 @@
-import { sendTriageMessage, fetchChatHistory, deleteChatSession, fetchSessionMessages, sendMentalHealthMessage, saveMoodSession, fetchMoodHistory } from '../services/api';
-import { Brain, Stethoscope, CalendarPlus, User, LogOut, LayoutDashboard, Globe, Settings, Trash2, Menu, PanelLeftClose, PanelLeftOpen, Send, MapPin } from 'lucide-react';
+import { sendTriageMessage, fetchChatHistory, deleteChatSession, fetchSessionMessages, sendMentalHealthMessage, saveMoodSession, fetchMoodHistory, fetchDoctors, bookAppointment, fetchAppointments } from '../services/api';
+import type { Doctor } from '../services/api';
+import { Brain, Stethoscope, CalendarPlus, User, LogOut, LayoutDashboard, Globe, Trash2, Menu, PanelLeftClose, PanelLeftOpen, Send, MapPin } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authService } from '../services/authService';
@@ -11,7 +12,7 @@ import Profile from '../components/profile/Profile';
 const OverviewCanvas = ({ onSelectView }: { onSelectView: (view: any) => void }) => (
   <div className="flex-1 flex items-center justify-center p-8 h-full">
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-5xl">
-      <motion.button 
+      <motion.button
         whileHover={{ scale: 1.02 }}
         whileTap={{ scale: 0.98 }}
         onClick={() => onSelectView('mental-health')}
@@ -25,8 +26,8 @@ const OverviewCanvas = ({ onSelectView }: { onSelectView: (view: any) => void })
           <p className="text-sm text-slate-400 mt-2">Empathetic AI counseling and support</p>
         </div>
       </motion.button>
-      
-      <motion.button 
+
+      <motion.button
         whileHover={{ scale: 1.02 }}
         whileTap={{ scale: 0.98 }}
         onClick={() => onSelectView('triage')}
@@ -41,7 +42,7 @@ const OverviewCanvas = ({ onSelectView }: { onSelectView: (view: any) => void })
         </div>
       </motion.button>
 
-      <motion.button 
+      <motion.button
         whileHover={{ scale: 1.02 }}
         whileTap={{ scale: 0.98 }}
         onClick={() => onSelectView('appointments')}
@@ -59,10 +60,10 @@ const OverviewCanvas = ({ onSelectView }: { onSelectView: (view: any) => void })
   </div>
 );
 
-const ChatInterface = ({ 
-  isHistoryOpen, setIsHistoryOpen, historyTitle, disclaimer, 
+const ChatInterface = ({
+  isHistoryOpen, setIsHistoryOpen, historyTitle, disclaimer,
   messages, onSendMessage, isLoading,
-  sessions = [], activeSessionId = null, 
+  sessions = [], activeSessionId = null,
   onSelectSession, onDeleteSession, onNewSession
 }: any) => {
   const [inputValue, setInputValue] = useState('');
@@ -101,7 +102,7 @@ const ChatInterface = ({
     <div className="flex h-full w-full">
       <AnimatePresence initial={false}>
         {isHistoryOpen && (
-          <motion.div 
+          <motion.div
             initial={{ width: 0, opacity: 0 }}
             animate={{ width: 320, opacity: 1 }}
             exit={{ width: 0, opacity: 0 }}
@@ -114,32 +115,31 @@ const ChatInterface = ({
             <div className="p-4 min-w-[320px] overflow-y-auto">
               <div className="text-sm text-slate-500 flex flex-col gap-2">
                 <div className="p-4 min-w-[320px] flex flex-col h-full overflow-hidden">
-                  
-                  <button 
+
+                  <button
                     onClick={onNewSession}
                     className="w-full py-3 mb-4 rounded-xl border border-teal-500/30 bg-teal-500/10 hover:bg-teal-500/20 text-teal-300 font-medium transition-all shadow-[0_0_15px_rgba(45,212,191,0.1)] flex items-center justify-center gap-2"
                   >
                     + New Consultation
                   </button>
-                  
+
                   <div className="flex-1 overflow-y-auto space-y-2 pr-1 custom-scrollbar">
                     {sessions.length === 0 ? (
-                       <div className="text-slate-500 text-sm text-center mt-10 italic">No past consultations</div>
+                      <div className="text-slate-500 text-sm text-center mt-10 italic">No past consultations</div>
                     ) : (
                       sessions.map((session: any, idx: number) => (
-                        <div 
+                        <div
                           key={session.id || `fallback-${idx}`}
                           onClick={() => onSelectSession && onSelectSession(session.id)}
-                          className={`group p-3 rounded-xl border cursor-pointer transition-colors flex justify-between items-center ${
-                            activeSessionId === session.id 
-                              ? 'bg-slate-700/50 border-teal-500/30' 
-                              : 'bg-slate-800/30 border-white/5 hover:bg-slate-800/60'
-                          }`}
+                          className={`group p-3 rounded-xl border cursor-pointer transition-colors flex justify-between items-center ${activeSessionId === session.id
+                            ? 'bg-slate-700/50 border-teal-500/30'
+                            : 'bg-slate-800/30 border-white/5 hover:bg-slate-800/60'
+                            }`}
                         >
                           <span className={`text-sm truncate ${activeSessionId === session.id ? 'text-teal-300 font-medium' : 'text-slate-300'}`}>
                             {session.title || 'Consultation'}
                           </span>
-                          <button 
+                          <button
                             onClick={(e) => {
                               e.stopPropagation();
                               onDeleteSession && onDeleteSession(session.id, session.title || 'this consultation');
@@ -163,55 +163,54 @@ const ChatInterface = ({
 
       <div className="flex-1 flex flex-col relative min-w-0 bg-slate-900/10">
         <div className="absolute top-4 left-4 z-10">
-          <button 
+          <button
             onClick={() => setIsHistoryOpen(!isHistoryOpen)}
             className="p-2 rounded-lg bg-slate-800/80 hover:bg-slate-700 border border-white/10 text-slate-300 transition-colors backdrop-blur-md shadow-lg"
           >
             {isHistoryOpen ? <PanelLeftClose className="w-5 h-5" /> : <PanelLeftOpen className="w-5 h-5" />}
           </button>
         </div>
-        
+
         <div className="pt-4 px-16 z-10 flex justify-center mt-2">
-            {disclaimer && (
-              <div className="text-sm font-medium text-amber-400 bg-amber-400/10 border border-amber-400/20 px-4 py-2 rounded-lg shadow-lg text-center max-w-2xl">
-                {disclaimer}
-              </div>
-            )}
+          {disclaimer && (
+            <div className="text-sm font-medium text-amber-400 bg-amber-400/10 border border-amber-400/20 px-4 py-2 rounded-lg shadow-lg text-center max-w-2xl">
+              {disclaimer}
+            </div>
+          )}
         </div>
 
         <div className="relative flex-1 overflow-y-auto p-4 md:p-8 space-y-6 flex flex-col pt-12">
-            <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-teal-500/20 rounded-full blur-[100px] ambient-orb pointer-events-none"></div>
-            <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-blue-500/10 rounded-full blur-[80px] ambient-orb pointer-events-none" style={{ animationDelay: '-5s' }}></div>
+          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-teal-500/20 rounded-full blur-[100px] ambient-orb pointer-events-none"></div>
+          <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-blue-500/10 rounded-full blur-[80px] ambient-orb pointer-events-none" style={{ animationDelay: '-5s' }}></div>
 
-            {messages?.map((msg: any, idx: number) => (
-              <div key={idx} className={`flex z-10 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <div className={`message-card max-w-[80%] md:max-w-[70%] p-5 rounded-2xl backdrop-blur-md shadow-lg border ${
-                  msg.role === 'user' 
-                    ? 'bg-teal-900/40 border-teal-500/30 text-teal-50 rounded-br-sm' 
-                    : 'bg-slate-800/50 border-slate-600/30 text-slate-200 rounded-bl-sm'
+          {messages?.map((msg: any, idx: number) => (
+            <div key={idx} className={`flex z-10 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+              <div className={`message-card max-w-[80%] md:max-w-[70%] p-5 rounded-2xl backdrop-blur-md shadow-lg border ${msg.role === 'user'
+                ? 'bg-teal-900/40 border-teal-500/30 text-teal-50 rounded-br-sm'
+                : 'bg-slate-800/50 border-slate-600/30 text-slate-200 rounded-bl-sm'
                 }`}>
-                  <p className="whitespace-pre-wrap leading-relaxed">{formatMessage(msg.text)}</p>
-                </div>
+                <p className="whitespace-pre-wrap leading-relaxed">{formatMessage(msg.text)}</p>
               </div>
-            ))}
+            </div>
+          ))}
 
-            {isLoading && (
-              <div className="flex z-10 justify-start">
-                <div className="message-card max-w-[80%] md:max-w-[70%] bg-slate-800/50 border border-slate-600/30 backdrop-blur-md text-teal-400 p-5 rounded-2xl rounded-bl-sm shadow-lg italic">
-                  <p className="flex items-center gap-2">
-                    <span className="w-2 h-2 bg-teal-400 rounded-full animate-ping"></span>
-                    Processing medical data...
-                  </p>
-                </div>
+          {isLoading && (
+            <div className="flex z-10 justify-start">
+              <div className="message-card max-w-[80%] md:max-w-[70%] bg-slate-800/50 border border-slate-600/30 backdrop-blur-md text-teal-400 p-5 rounded-2xl rounded-bl-sm shadow-lg italic">
+                <p className="flex items-center gap-2">
+                  <span className="w-2 h-2 bg-teal-400 rounded-full animate-ping"></span>
+                  Processing medical data...
+                </p>
               </div>
-            )}
-            {/* 2. ADD THIS LINE: The invisible Dummy Div at the very bottom of the messages */}
-            <div ref={messagesEndRef} />
+            </div>
+          )}
+          {/* 2. ADD THIS LINE: The invisible Dummy Div at the very bottom of the messages */}
+          <div ref={messagesEndRef} />
         </div>
 
         <div className="p-4 bg-slate-900/60 backdrop-blur-xl border-t border-white/5 z-10">
           <div className="max-w-4xl mx-auto flex items-end gap-2 bg-slate-800/50 border border-white/10 rounded-2xl p-2 focus-within:ring-2 focus-within:ring-teal-500/50 transition-all shadow-inner">
-            <textarea 
+            <textarea
               rows={1}
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
@@ -224,7 +223,7 @@ const ChatInterface = ({
               placeholder="Type your symptoms here..."
               className="flex-1 bg-transparent text-slate-200 resize-none max-h-32 focus:outline-none p-2 min-h-[44px]"
             />
-            <button 
+            <button
               onClick={handleSend}
               disabled={isLoading}
               className="p-3 rounded-xl bg-teal-500 text-white hover:bg-teal-400 disabled:opacity-50 transition-colors shadow-[0_0_15px_rgba(20,184,166,0.4)] mb-0.5"
@@ -276,9 +275,9 @@ const PrivateChatInterface = ({ initialMood, messages, onSendMessage, isLoading,
     setInputValue('');
   };
 
- const handleFinalMoodSelect = async (finalMood: string) => {
+  const handleFinalMoodSelect = async (finalMood: string) => {
     try {
-      await saveMoodSession(initialMood, finalMood); 
+      await saveMoodSession(initialMood, finalMood);
     } catch (error) {
       console.error("Failed to save mood");
     }
@@ -289,7 +288,7 @@ const PrivateChatInterface = ({ initialMood, messages, onSendMessage, isLoading,
   return (
     <div className="flex flex-col h-full w-full relative bg-slate-900/10">
       <div className="absolute top-6 right-6 z-30">
-        <button 
+        <button
           onClick={() => setShowEndConfirm(true)}
           className="px-4 py-2.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 hover:border-red-500/50 rounded-xl flex items-center gap-2 transition-all shadow-[0_0_15px_rgba(239,68,68,0.15)] hover:shadow-[0_0_20px_rgba(239,68,68,0.3)] backdrop-blur-md"
         >
@@ -310,11 +309,10 @@ const PrivateChatInterface = ({ initialMood, messages, onSendMessage, isLoading,
 
         {messages?.map((msg: any, idx: number) => (
           <div key={idx} className={`flex z-10 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-            <div className={`message-card max-w-[80%] md:max-w-[60%] p-5 rounded-2xl backdrop-blur-md shadow-lg border ${
-              msg.role === 'user' 
-                ? 'bg-teal-900/40 border-teal-500/30 text-teal-50 rounded-br-sm' 
-                : 'bg-slate-800/60 border-slate-600/30 text-slate-200 rounded-bl-sm'
-            }`}>
+            <div className={`message-card max-w-[80%] md:max-w-[60%] p-5 rounded-2xl backdrop-blur-md shadow-lg border ${msg.role === 'user'
+              ? 'bg-teal-900/40 border-teal-500/30 text-teal-50 rounded-br-sm'
+              : 'bg-slate-800/60 border-slate-600/30 text-slate-200 rounded-bl-sm'
+              }`}>
               <p className="whitespace-pre-wrap leading-relaxed">{formatMessage(msg.text)}</p>
             </div>
           </div>
@@ -336,7 +334,7 @@ const PrivateChatInterface = ({ initialMood, messages, onSendMessage, isLoading,
 
       <div className="p-4 bg-slate-900/60 backdrop-blur-xl border-t border-white/5 z-20">
         <div className="max-w-4xl mx-auto flex items-end gap-2 bg-slate-800/50 border border-white/10 rounded-2xl p-2 focus-within:ring-2 focus-within:ring-teal-500/50 transition-all shadow-inner">
-          <textarea 
+          <textarea
             rows={1}
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
@@ -349,7 +347,7 @@ const PrivateChatInterface = ({ initialMood, messages, onSendMessage, isLoading,
             placeholder="Share what's on your mind..."
             className="flex-1 bg-transparent text-slate-200 resize-none max-h-32 focus:outline-none p-2 min-h-[44px]"
           />
-          <button 
+          <button
             onClick={handleSend}
             disabled={isLoading}
             className="p-3 rounded-xl bg-teal-500 text-white hover:bg-teal-400 disabled:opacity-50 transition-colors shadow-[0_0_15px_rgba(20,184,166,0.4)] mb-0.5"
@@ -362,7 +360,7 @@ const PrivateChatInterface = ({ initialMood, messages, onSendMessage, isLoading,
       <AnimatePresence>
         {showEndConfirm && (
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center">
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
@@ -373,13 +371,13 @@ const PrivateChatInterface = ({ initialMood, messages, onSendMessage, isLoading,
                 Are you sure you want to leave? This is a private space, so your chat history will be permanently erased once you exit.
               </p>
               <div className="flex gap-4">
-                <button 
+                <button
                   onClick={() => setShowEndConfirm(false)}
                   className="flex-1 px-4 py-3 bg-slate-700/50 hover:bg-slate-700 text-slate-200 rounded-xl transition-colors font-medium border border-white/5"
                 >
                   Stay
                 </button>
-                <button 
+                <button
                   onClick={() => {
                     setShowEndConfirm(false);
                     setShowPostMood(true);
@@ -397,7 +395,7 @@ const PrivateChatInterface = ({ initialMood, messages, onSendMessage, isLoading,
       <AnimatePresence>
         {showPostMood && (
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center">
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
@@ -405,7 +403,7 @@ const PrivateChatInterface = ({ initialMood, messages, onSendMessage, isLoading,
             >
               <h2 className="text-2xl font-bold text-slate-100 mb-2">Thank you for sharing.</h2>
               <p className="text-slate-400 text-sm mb-8">Take a deep breath. How are you feeling now after talking?</p>
-              
+
               <div className="flex flex-wrap justify-center gap-4 mb-8">
                 {moods.map((m) => (
                   <button
@@ -418,10 +416,10 @@ const PrivateChatInterface = ({ initialMood, messages, onSendMessage, isLoading,
                   </button>
                 ))}
               </div>
-              <button 
+              <button
                 onClick={() => {
                   setShowPostMood(false);
-                  setShowEndConfirm(true); 
+                  setShowEndConfirm(true);
                 }}
                 className="text-slate-500 hover:text-slate-300 text-sm font-medium transition-colors"
               >
@@ -439,7 +437,7 @@ const GlassmorphicMoodCalendar = ({ moodData = {} }: any) => {
   const today = new Date();
   const currentMonthName = today.toLocaleString('default', { month: 'long' });
   const currentYear = today.getFullYear();
-  
+
   const daysInMonth = new Date(currentYear, today.getMonth() + 1, 0).getDate();
   const startingDayOfWeek = new Date(currentYear, today.getMonth(), 1).getDay();
 
@@ -450,7 +448,7 @@ const GlassmorphicMoodCalendar = ({ moodData = {} }: any) => {
     <div className="w-full max-w-4xl mx-auto mt-12 p-8 rounded-3xl bg-slate-900/40 backdrop-blur-xl border border-white/10 shadow-[0_8px_32px_0_rgba(0,0,0,0.36)] relative overflow-hidden">
       <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-teal-500/50 to-transparent"></div>
       <div className="absolute -top-24 -right-24 w-48 h-48 bg-teal-500/20 rounded-full blur-[60px] pointer-events-none"></div>
-      
+
       <div className="flex items-center justify-between mb-8 z-10 relative">
         <h3 className="text-xl font-semibold text-slate-100 flex items-center gap-3">
           <CalendarPlus className="w-6 h-6 text-teal-400" />
@@ -467,7 +465,7 @@ const GlassmorphicMoodCalendar = ({ moodData = {} }: any) => {
             {day}
           </div>
         ))}
-        
+
         {blankDaysArray.map((_, index) => (
           <div key={`blank-${index}`} className="aspect-square"></div>
         ))}
@@ -481,18 +479,17 @@ const GlassmorphicMoodCalendar = ({ moodData = {} }: any) => {
           };
 
           return (
-            <div 
-              key={day} 
-              className={`group aspect-square rounded-2xl flex flex-col items-center justify-center transition-all duration-300 relative overflow-hidden ${
-                moodDataForDay 
-                  ? `${moodDataForDay.color} border shadow-lg hover:scale-105 cursor-pointer` 
-                  : 'bg-slate-800/30 border border-white/5 text-slate-500 hover:bg-slate-800/60'
-              } ${isToday && !moodDataForDay ? 'ring-2 ring-teal-500/50 ring-offset-2 ring-offset-slate-900' : ''}`}
+            <div
+              key={day}
+              className={`group aspect-square rounded-2xl flex flex-col items-center justify-center transition-all duration-300 relative overflow-hidden ${moodDataForDay
+                ? `${moodDataForDay.color} border shadow-lg hover:scale-105 cursor-pointer`
+                : 'bg-slate-800/30 border border-white/5 text-slate-500 hover:bg-slate-800/60'
+                } ${isToday && !moodDataForDay ? 'ring-2 ring-teal-500/50 ring-offset-2 ring-offset-slate-900' : ''}`}
             >
               <span className={`text-sm font-medium mb-1 z-10 transition-opacity ${moodDataForDay ? 'group-hover:opacity-0' : ''} ${isToday ? 'text-teal-300 font-bold' : ''}`}>
                 {day}
               </span>
-              
+
               {moodDataForDay && (
                 <span className="text-2xl drop-shadow-md z-10 transition-opacity duration-300 group-hover:opacity-0">
                   {moodDictionary[moodDataForDay.finalLabel]}
@@ -514,11 +511,11 @@ const GlassmorphicMoodCalendar = ({ moodData = {} }: any) => {
   );
 };
 
-const MentalHealthCanvas = ({ isHistoryOpen, setIsHistoryOpen, language }: any) => {
+const MentalHealthCanvas = ({ language }: any) => {
   const [selectedMood, setSelectedMood] = useState<string | null>(null);
-  const [messages, setMessages] = useState<{role: string, text: string}[]>([]);
+  const [messages, setMessages] = useState<{ role: string, text: string }[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [calendarData, setCalendarData] = useState<any>({}); 
+  const [calendarData, setCalendarData] = useState<any>({});
 
   const moodStyles: Record<string, any> = {
     'Terrible': { color: 'bg-red-500/20 border-red-500/50 text-red-400', emoji: '😫', border: 'hover:border-red-500/50', bg: 'hover:bg-red-500/10' },
@@ -541,20 +538,20 @@ const MentalHealthCanvas = ({ isHistoryOpen, setIsHistoryOpen, language }: any) 
       try {
         const rawData = await fetchMoodHistory();
         const formattedData: any = {};
-        
+
         rawData.forEach((entry: any) => {
           const day = parseInt(entry.recordedDate.split('-')[2], 10);
-          const style = moodStyles[entry.finalMood]; 
-          
+          const style = moodStyles[entry.finalMood];
+
           if (style) {
-            formattedData[day] = { 
-              initialLabel: entry.initialMood, 
-              finalLabel: entry.finalMood, 
-              ...style 
+            formattedData[day] = {
+              initialLabel: entry.initialMood,
+              finalLabel: entry.finalMood,
+              ...style
             };
           }
         });
-        
+
         setCalendarData(formattedData);
       } catch (e) {
         console.error("Could not fetch calendar data");
@@ -564,7 +561,7 @@ const MentalHealthCanvas = ({ isHistoryOpen, setIsHistoryOpen, language }: any) 
     if (!selectedMood) {
       loadMoods();
     }
-  }, [selectedMood]); 
+  }, [selectedMood]);
 
   const handleSendMessage = async (text: string) => {
     const newHistory = [...messages, { role: 'user', text }];
@@ -588,7 +585,7 @@ const MentalHealthCanvas = ({ isHistoryOpen, setIsHistoryOpen, language }: any) 
   };
 
   const handleSessionComplete = () => {
-    setSelectedMood(null); 
+    setSelectedMood(null);
     setMessages([]);
   };
 
@@ -599,16 +596,16 @@ const MentalHealthCanvas = ({ isHistoryOpen, setIsHistoryOpen, language }: any) 
           <h2 className="text-4xl font-bold text-slate-100 mb-12 drop-shadow-md tracking-tight">
             How are you feeling right now?
           </h2>
-          
+
           <div className="flex flex-wrap justify-center gap-6 mb-16">
             {moodsList.map((m) => (
               <button
                 key={m.label}
                 onClick={() => {
                   setSelectedMood(m.label);
-                  setMessages([{ 
-                    role: 'ai', 
-                    text: `I see you're feeling ${m.label.toLowerCase()} today. This is a safe space, and I'm here to listen without judgment. What's on your mind?` 
+                  setMessages([{
+                    role: 'ai',
+                    text: `I see you're feeling ${m.label.toLowerCase()} today. This is a safe space, and I'm here to listen without judgment. What's on your mind?`
                   }]);
                 }}
                 className={`w-32 h-32 rounded-3xl bg-slate-800/40 border border-white/5 transition-all duration-300 flex flex-col items-center justify-center gap-3 ${m.border} ${m.bg} shadow-lg hover:scale-105 hover:shadow-xl`}
@@ -620,7 +617,7 @@ const MentalHealthCanvas = ({ isHistoryOpen, setIsHistoryOpen, language }: any) 
           </div>
 
           <GlassmorphicMoodCalendar moodData={calendarData} />
-          
+
           <div className="h-12 w-full"></div>
         </div>
       </div>
@@ -628,7 +625,7 @@ const MentalHealthCanvas = ({ isHistoryOpen, setIsHistoryOpen, language }: any) 
   }
 
   return (
-    <PrivateChatInterface 
+    <PrivateChatInterface
       initialMood={selectedMood}
       messages={messages}
       onSendMessage={handleSendMessage}
@@ -640,14 +637,14 @@ const MentalHealthCanvas = ({ isHistoryOpen, setIsHistoryOpen, language }: any) 
 
 const TriageCanvas = ({ isHistoryOpen, setIsHistoryOpen, language }: any) => {
   const defaultMessage = { role: 'ai', text: "Hello. I'm here to help you assess your symptoms. Please describe what you're experiencing in as much detail as possible." };
-  
+
   const [messages, setMessages] = useState([defaultMessage]);
   const [isLoading, setIsLoading] = useState(false);
-  
+
   const [sessions, setSessions] = useState<any[]>([]);
   const [activeSessionId, setActiveSessionId] = useState<number | null>(null);
-  
-  const [sessionToDelete, setSessionToDelete] = useState<{id: number, title: string} | null>(null);
+
+  const [sessionToDelete, setSessionToDelete] = useState<{ id: number, title: string } | null>(null);
 
   const loadHistory = async () => {
     try {
@@ -667,8 +664,8 @@ const TriageCanvas = ({ isHistoryOpen, setIsHistoryOpen, language }: any) => {
   }, []);
 
   const handleNewSession = () => {
-    setMessages([defaultMessage]); 
-    setActiveSessionId(null);      
+    setMessages([defaultMessage]);
+    setActiveSessionId(null);
   };
 
   const confirmDelete = async () => {
@@ -678,26 +675,26 @@ const TriageCanvas = ({ isHistoryOpen, setIsHistoryOpen, language }: any) => {
       setSessions(sessions.filter(s => s.id !== sessionToDelete.id));
       if (activeSessionId === sessionToDelete.id) handleNewSession();
     }
-    setSessionToDelete(null); 
+    setSessionToDelete(null);
   };
 
   const handleSelectSession = async (id: number) => {
     setActiveSessionId(id);
     setIsLoading(true);
-    
+
     const pastMessages = await fetchSessionMessages(id);
     if (pastMessages && pastMessages.length > 0) {
       setMessages(pastMessages);
     } else {
       setMessages([defaultMessage]);
     }
-    
+
     setIsLoading(false);
   };
 
   const langCodeMap: Record<string, string> = {
     'English': 'en', 'Hindi': 'hi', 'Gujarati': 'gu', 'Marathi': 'mr',
-    'Bengali': 'bn', 'Telugu': 'te', 'Tamil': 'ta', 'Urdu': 'ur','Kannada': 'kn',
+    'Bengali': 'bn', 'Telugu': 'te', 'Tamil': 'ta', 'Urdu': 'ur', 'Kannada': 'kn',
     'Malayalam': 'ml', 'Odia': 'or'
   };
 
@@ -708,13 +705,13 @@ const TriageCanvas = ({ isHistoryOpen, setIsHistoryOpen, language }: any) => {
     try {
       const code = langCodeMap[language] || 'en';
       const data = await sendTriageMessage(text, code, activeSessionId);
-      
+
       setMessages(prev => [...prev, { role: 'ai', text: data.response }]);
-      
+
       if (!activeSessionId) {
         setActiveSessionId(data.sessionId);
       }
-      
+
       loadHistory();
     } catch (error) {
       setMessages(prev => [...prev, { role: 'ai', text: "Network error connecting to the medical service." }]);
@@ -724,8 +721,8 @@ const TriageCanvas = ({ isHistoryOpen, setIsHistoryOpen, language }: any) => {
   };
   return (
     <>
-      <ChatInterface 
-        isHistoryOpen={isHistoryOpen} 
+      <ChatInterface
+        isHistoryOpen={isHistoryOpen}
         setIsHistoryOpen={setIsHistoryOpen}
         historyTitle="Past Triage Results"
         disclaimer="⚠️ Disclaimer: This AI provides preliminary suggestions only. For serious symptoms or emergencies, please consult a real doctor immediately."
@@ -741,11 +738,11 @@ const TriageCanvas = ({ isHistoryOpen, setIsHistoryOpen, language }: any) => {
 
       <AnimatePresence>
         {sessionToDelete && (
-          <div 
+          <div
             className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center"
             onClick={() => setSessionToDelete(null)}
           >
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
@@ -759,15 +756,15 @@ const TriageCanvas = ({ isHistoryOpen, setIsHistoryOpen, language }: any) => {
               <p className="text-slate-400 text-sm mb-6">
                 Are you sure you want to delete <span className="text-slate-200 font-semibold">"{sessionToDelete.title}"</span>? This action cannot be undone.
               </p>
-              
+
               <div className="flex gap-4">
-                <button 
+                <button
                   onClick={() => setSessionToDelete(null)}
                   className="flex-1 px-4 py-2 bg-slate-700/50 hover:bg-slate-700 text-slate-200 rounded-xl transition-colors font-medium border border-white/5"
                 >
                   Cancel
                 </button>
-                <button 
+                <button
                   onClick={confirmDelete}
                   className="flex-1 px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 hover:border-red-500/50 rounded-xl transition-all font-medium shadow-[0_0_15px_rgba(239,68,68,0.2)]"
                 >
@@ -786,22 +783,32 @@ const AppointmentsCanvas = ({ isHistoryOpen, setIsHistoryOpen }: any) => {
   const [selectedState, setSelectedState] = useState<string>('');
   const [selectedCity, setSelectedCity] = useState<string>('');
   const [selectedSpecialty, setSelectedSpecialty] = useState<string>('');
-  const [selectedDoctorId, setSelectedDoctorId] = useState<number | ''>('');
+  const [selectedDoctorId, setSelectedDoctorId] = useState<string | ''>('');
   const [date, setDate] = useState<string>('');
-  const [reason, setReason] = useState<string>('');
+  const [primarySymptom, setPrimarySymptom] = useState<string>('');
+  const [duration, setDuration] = useState<string>('');
+  const [intensity, setIntensity] = useState<string>('Mild');
+  const [doctors, setDoctors] = useState<Doctor[]>([]);
 
-  const [appointments, setAppointments] = useState([
-    { id: 1, doctor: 'Dr. Sharma', specialty: 'Cardiologist', date: 'May 10, 2026', time: '10:00 AM', status: 'upcoming' },
-    { id: 2, doctor: 'Dr. Gupta', specialty: 'Dermatologist', date: 'Apr 25, 2026', time: '02:30 PM', status: 'completed' },
-    { id: 3, doctor: 'Dr. Patel', specialty: 'General Physician', date: 'Mar 12, 2026', time: '11:15 AM', status: 'completed' }
-  ]);
+  const [appointments, setAppointments] = useState<any[]>([]);
+  const [alertConfig, setAlertConfig] = useState<{show: boolean, type: 'success'|'error'|'warning', message: string} | null>(null);
 
-  const mockDoctors = [
-    { id: 1, name: "Dr. Sharma", specialization: "Cardiologist", state: "Gujarat", city: "Vadodara", experience: "15+ Years", clinicAddress: "123 Heart Care Center, Alkapuri, Vadodara" },
-    { id: 2, name: "Dr. Gupta", specialization: "Dermatologist", state: "Maharashtra", city: "Mumbai", experience: "10+ Years", clinicAddress: "45 Skin Clinic, Bandra West, Mumbai" },
-    { id: 3, name: "Dr. Patel", specialization: "General Physician", state: "Gujarat", city: "Ahmedabad", experience: "8+ Years", clinicAddress: "78 Health Hub, SG Highway, Ahmedabad" },
-    { id: 4, name: "Dr. Desai", specialization: "Cardiologist", state: "Maharashtra", city: "Pune", experience: "20+ Years", clinicAddress: "90 Cardiac Center, Koregaon Park, Pune" },
-  ];
+  const loadAppointments = async () => {
+    const data = await fetchAppointments();
+    setAppointments(data);
+  };
+
+  useEffect(() => {
+    loadAppointments();
+  }, []);
+
+  useEffect(() => {
+    const loadDoctors = async () => {
+      const data = await fetchDoctors(selectedState, selectedCity, selectedSpecialty);
+      setDoctors(data);
+    };
+    loadDoctors();
+  }, [selectedState, selectedCity, selectedSpecialty]);
 
   const locationData: Record<string, string[]> = {
     "Gujarat": ["Ahmedabad", "Vadodara", "Surat", "Rajkot", "Godhra", "Gandhinagar"],
@@ -810,6 +817,24 @@ const AppointmentsCanvas = ({ isHistoryOpen, setIsHistoryOpen }: any) => {
   };
 
   const timeSlots = ['09:00 AM', '10:00 AM', '11:30 AM', '02:00 PM', '03:30 PM', '04:15 PM'];
+
+  // Filter slots to only show future times if "today" is selected
+  const availableTimeSlots = timeSlots.filter(slot => {
+    if (!date) return true;
+
+    const today = new Date();
+    // Format today to match your datepicker's output (DD-MM-YYYY)
+    const todayString = `${String(today.getDate()).padStart(2, '0')}-${String(today.getMonth() + 1).padStart(2, '0')}-${today.getFullYear()}`;
+
+    if (date !== todayString) return true;
+
+    const [time, period] = slot.split(' ');
+    let [hours] = time.split(':').map(Number);
+    if (period === 'PM' && hours !== 12) hours += 12;
+    if (period === 'AM' && hours === 12) hours = 0;
+
+    return hours > today.getHours();
+  });
 
   const today = new Date().toISOString().split('T')[0];
 
@@ -820,46 +845,56 @@ const AppointmentsCanvas = ({ isHistoryOpen, setIsHistoryOpen }: any) => {
     setSelectedDoctorId('');
     setSelectedTime(null);
     setDate('');
-    setReason('');
+    setPrimarySymptom('');
+    setDuration('');
+    setIntensity('Mild');
   };
 
-  const handleConfirmAppointment = (e: React.FormEvent) => {
+  const handleConfirmAppointment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!date || !selectedTime || !selectedDoctorId) {
-      alert('Please fill all required fields');
+      setAlertConfig({ show: true, type: 'warning', message: 'Please fill all required fields' });
       return;
     }
-    const doctorProfile = mockDoctors.find(d => d.id === selectedDoctorId);
+    if (!primarySymptom.trim() || !duration.trim()) {
+      setAlertConfig({ show: true, type: 'warning', message: 'Please fill all symptom fields' });
+      return;
+    }
+    const doctorProfile = doctors.find(d => d.id === selectedDoctorId);
     if (!doctorProfile) return;
 
-    const newAppointment = {
-      id: Date.now(),
-      doctor: doctorProfile.name,
-      specialty: doctorProfile.specialization,
-      date: new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-      time: selectedTime,
-      status: 'upcoming'
-    };
-    
-    setAppointments([newAppointment, ...appointments]);
-    handleResetForm();
-    alert('Appointment Confirmed!');
+    const compiledSymptoms = `Issue: ${primarySymptom} | Duration: ${duration} | Intensity: ${intensity}`;
+    console.log("Compiled Symptoms for backend submission:", compiledSymptoms);
+
+    try {
+      const [d, m, y] = date.split('-');
+      const apiDate = `${y}-${m}-${d}`;
+      const uiDate = `${d}/${m}/${y}`;
+
+      const payload = {
+        doctorId: selectedDoctorId,
+        scheduledDate: apiDate,
+        scheduledTime: selectedTime,
+        symptomsNotes: compiledSymptoms
+      };
+
+      await bookAppointment(payload);
+      setAlertConfig({ show: true, type: 'success', message: `Appointment Confirmed for ${uiDate}!` });
+      loadAppointments();
+      handleResetForm();
+    } catch (error: any) {
+      console.error("Booking error:", error);
+      setAlertConfig({ show: true, type: 'error', message: error.message || 'Failed to confirm appointment. Please try again.' });
+    }
   };
 
-  const filteredDoctors = mockDoctors.filter(doc => {
-    if (selectedState && doc.state !== selectedState) return false;
-    if (selectedCity && doc.city !== selectedCity) return false;
-    if (selectedSpecialty && doc.specialization !== selectedSpecialty) return false;
-    return true;
-  });
-
-  const selectedDoctorProfile = mockDoctors.find(d => d.id === selectedDoctorId);
+  const selectedDoctorProfile = doctors.find(d => d.id === selectedDoctorId);
 
   return (
     <div className="flex h-full w-full">
       <AnimatePresence initial={false}>
         {isHistoryOpen && (
-          <motion.div 
+          <motion.div
             initial={{ width: 0, opacity: 0 }}
             animate={{ width: 320, opacity: 1 }}
             exit={{ width: 0, opacity: 0 }}
@@ -869,34 +904,31 @@ const AppointmentsCanvas = ({ isHistoryOpen, setIsHistoryOpen }: any) => {
             <div className="p-4 border-b border-white/5 flex items-center justify-between min-w-[320px] h-16">
               <h3 className="font-semibold text-slate-200">My Appointments</h3>
             </div>
-            
-            <div className="p-4 min-w-[320px]">
-              <button 
-                onClick={handleResetForm}
-                className="w-full py-2.5 rounded-xl bg-teal-500/10 hover:bg-teal-500/20 border border-teal-500/30 text-teal-400 font-medium transition-colors shadow-lg mb-6">
-                + Book New
-              </button>
-              
+
+            <div className="p-4 min-w-[320px] overflow-y-auto max-h-[calc(100vh-12rem)] custom-scrollbar">
               <div className="text-sm flex flex-col gap-3">
-                {appointments.map((apt) => (
-                  <div key={apt.id} className="p-4 rounded-xl bg-slate-800/40 border border-white/5 hover:bg-slate-800/60 transition-colors group">
-                    <div className="flex justify-between items-start mb-2">
-                      <h4 className="font-semibold text-slate-200">{apt.doctor}</h4>
-                      <span className={`text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-full ${
-                        apt.status === 'upcoming' 
-                          ? 'bg-teal-500/20 text-teal-400' 
+                {appointments.length === 0 ? (
+                  <div className="text-slate-500 text-sm text-center mt-10 italic">No appointments booked</div>
+                ) : (
+                  appointments.map((apt) => (
+                    <div key={apt.id} className="p-4 rounded-xl bg-slate-800/40 border border-white/5 hover:bg-slate-800/60 transition-colors group">
+                      <div className="flex justify-between items-start mb-2">
+                        <h4 className="font-semibold text-slate-200">{apt.doctorName}</h4>
+                        <span className={`text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-full ${apt.status === 'upcoming'
+                          ? 'bg-teal-500/20 text-teal-400'
                           : 'bg-slate-700/50 text-slate-400'
-                      }`}>
-                        {apt.status}
-                      </span>
+                          }`}>
+                          {apt.status}
+                        </span>
+                      </div>
+                      <div className="text-slate-400 text-xs mb-2">{apt.specialty}</div>
+                      <div className="text-slate-500 text-xs flex items-center gap-1.5">
+                        <CalendarPlus className="w-3.5 h-3.5" />
+                        {apt.date} &bull; {apt.time}
+                      </div>
                     </div>
-                    <div className="text-slate-400 text-xs mb-2">{apt.specialty}</div>
-                    <div className="text-slate-500 text-xs flex items-center gap-1.5">
-                      <CalendarPlus className="w-3.5 h-3.5" />
-                      {apt.date} &bull; {apt.time}
-                    </div>
-                  </div>
-                ))}
+                  ))
+                )}
               </div>
             </div>
           </motion.div>
@@ -905,7 +937,7 @@ const AppointmentsCanvas = ({ isHistoryOpen, setIsHistoryOpen }: any) => {
 
       <div className="flex-1 flex flex-col relative min-w-0 overflow-y-auto bg-slate-900/10">
         <div className="absolute top-4 left-4 z-10">
-          <button 
+          <button
             onClick={() => setIsHistoryOpen(!isHistoryOpen)}
             className="p-2 rounded-lg bg-slate-800/80 hover:bg-slate-700 border border-white/10 text-slate-300 transition-colors backdrop-blur-md shadow-lg"
             title={isHistoryOpen ? "Close History" : "Open History"}
@@ -913,20 +945,20 @@ const AppointmentsCanvas = ({ isHistoryOpen, setIsHistoryOpen }: any) => {
             {isHistoryOpen ? <PanelLeftClose className="w-5 h-5" /> : <PanelLeftOpen className="w-5 h-5" />}
           </button>
         </div>
-        
+
         <div className="flex-1 flex flex-col items-center justify-center p-6 md:p-12 pt-20">
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             className="w-full max-w-2xl bg-slate-800/40 backdrop-blur-xl border border-white/10 rounded-3xl p-6 md:p-8 shadow-2xl shadow-black/50"
           >
             <h2 className="text-2xl font-bold text-slate-100 mb-8 border-b border-white/5 pb-4">Book a Consultation</h2>
-            
+
             <form className="space-y-6" onSubmit={handleConfirmAppointment}>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-slate-400">State</label>
-                  <CustomDropdown 
+                  <CustomDropdown
                     value={selectedState}
                     onChange={(val) => {
                       setSelectedState(val);
@@ -939,7 +971,7 @@ const AppointmentsCanvas = ({ isHistoryOpen, setIsHistoryOpen }: any) => {
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-slate-400">City</label>
-                  <CustomDropdown 
+                  <CustomDropdown
                     value={selectedCity}
                     onChange={(val) => {
                       setSelectedCity(val);
@@ -955,7 +987,7 @@ const AppointmentsCanvas = ({ isHistoryOpen, setIsHistoryOpen }: any) => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-slate-400">Specialization</label>
-                  <CustomDropdown 
+                  <CustomDropdown
                     value={selectedSpecialty}
                     onChange={(val) => {
                       setSelectedSpecialty(val);
@@ -967,10 +999,10 @@ const AppointmentsCanvas = ({ isHistoryOpen, setIsHistoryOpen }: any) => {
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-slate-400">Doctor</label>
-                  <CustomDropdown 
+                  <CustomDropdown
                     value={selectedDoctorId}
-                    onChange={(val) => setSelectedDoctorId(Number(val))}
-                    options={filteredDoctors.map(doc => ({ value: doc.id, label: `${doc.name} - ${doc.specialization}` }))}
+                    onChange={(val) => setSelectedDoctorId(val)}
+                    options={doctors.map(doc => ({ value: doc.id, label: `${doc.name} - ${doc.specialization}` }))}
                     placeholder="Select Doctor..."
                   />
                 </div>
@@ -1004,49 +1036,92 @@ const AppointmentsCanvas = ({ isHistoryOpen, setIsHistoryOpen }: any) => {
               <div className="space-y-4 pt-2">
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-slate-400">Date</label>
-                  <CustomDatePicker 
+                  <CustomDatePicker
                     value={date}
                     onChange={setDate}
                     minDate={today}
                   />
                 </div>
-                
+
                 <div className="space-y-2 pt-2">
                   <label className="text-sm font-medium text-slate-400 mb-2 block">Available Time Slots</label>
                   <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3">
-                    {timeSlots.map(time => (
-                      <button
-                        key={time}
-                        type="button"
-                        onClick={() => setSelectedTime(time)}
-                        className={`py-2 px-1 rounded-lg text-xs font-medium transition-all ${
-                          selectedTime === time 
-                            ? 'bg-teal-500/20 border-teal-500/50 text-teal-300 shadow-[0_0_10px_rgba(20,184,166,0.2)] border' 
+                    {availableTimeSlots.length > 0 ? (
+                      availableTimeSlots.map(time => (
+                        <button
+                          key={time}
+                          type="button"
+                          onClick={() => setSelectedTime(time)}
+                          className={`py-2 px-1 rounded-lg text-xs font-medium transition-all ${selectedTime === time
+                            ? 'bg-teal-500/20 border-teal-500/50 text-teal-300 shadow-[0_0_10px_rgba(20,184,166,0.2)] border'
                             : 'bg-slate-800/50 border-white/5 text-slate-400 hover:bg-slate-700/50 hover:text-slate-200 border'
-                        }`}
-                      >
-                        {time}
-                      </button>
-                    ))}
+                            }`}
+                        >
+                          {time}
+                        </button>
+                      ))
+                    ) : (
+                      <div className="col-span-full text-sm text-amber-400 italic bg-amber-400/10 p-3 rounded-xl text-center border border-amber-400/20 shadow-inner">
+                        No more slots available today. Please select tomorrow.
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
 
-              <div className="space-y-2 pt-2">
-                <label className="text-sm font-medium text-slate-400">Reason for visit (Symptoms/Notes)</label>
-                <textarea 
-                  rows={3}
-                  value={reason}
-                  onChange={(e) => setReason(e.target.value)}
-                  className="w-full bg-slate-800/50 border border-white/10 rounded-xl px-4 py-3 text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500/50 resize-y min-h-[100px]"
-                  placeholder="Please describe your symptoms briefly..."
-                />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-slate-400">Primary Symptom</label>
+                  <input
+                    type="text"
+                    value={primarySymptom}
+                    onChange={(e) => setPrimarySymptom(e.target.value)}
+                    placeholder="e.g. Headache, Cough"
+                    className="w-full bg-slate-800/50 border border-white/10 rounded-xl px-4 py-3 text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500/50"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-slate-400">Duration</label>
+                  <input
+                    type="text"
+                    value={duration}
+                    onChange={(e) => setDuration(e.target.value)}
+                    placeholder="e.g. 2 days, 1 week"
+                    className="w-full bg-slate-800/50 border border-white/10 rounded-xl px-4 py-3 text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500/50"
+                  />
+                </div>
               </div>
 
-              <div className="pt-4">
-                <button 
+              <div className="space-y-2 pt-2">
+                <label className="text-sm font-medium text-slate-400">Intensity</label>
+                <div className="flex gap-4">
+                  {['Mild', 'Moderate', 'Severe'].map((level) => (
+                    <button
+                      key={level}
+                      type="button"
+                      onClick={() => setIntensity(level)}
+                      className={`flex-1 py-3 px-4 rounded-xl text-sm font-semibold transition-all border ${intensity === level
+                        ? 'bg-teal-500/20 border-teal-500/50 text-teal-300 shadow-[0_0_15px_rgba(20,184,166,0.2)]'
+                        : 'bg-slate-800/50 border-white/5 text-slate-400 hover:bg-slate-700/50 hover:text-slate-200'
+                        }`}
+                    >
+                      {level}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="pt-4 flex gap-4">
+                <button
+                  type="button"
+                  onClick={handleResetForm}
+                  className="flex-1 bg-slate-800/40 hover:bg-slate-700/40 text-slate-300 font-semibold border border-white/10 hover:border-white/20 rounded-xl py-4 transition-all backdrop-blur-md"
+                >
+                  Reset Form
+                </button>
+                <button
                   type="submit"
-                  className="w-full bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-400 hover:to-cyan-400 text-white font-semibold rounded-xl py-4 transition-all shadow-[0_0_20px_rgba(20,184,166,0.3)] hover:shadow-[0_0_30px_rgba(20,184,166,0.5)] transform hover:-translate-y-0.5"
+                  className="flex-1 bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-400 hover:to-cyan-400 text-white font-semibold rounded-xl py-4 transition-all shadow-[0_0_20px_rgba(20,184,166,0.3)] hover:shadow-[0_0_30px_rgba(20,184,166,0.5)] transform hover:-translate-y-0.5"
                 >
                   Confirm Appointment
                 </button>
@@ -1055,6 +1130,69 @@ const AppointmentsCanvas = ({ isHistoryOpen, setIsHistoryOpen }: any) => {
           </motion.div>
         </div>
       </div>
+
+      {/* Glassmorphic Alert Modal */}
+      <AnimatePresence>
+        {alertConfig && alertConfig.show && (
+          <div
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center"
+            onClick={() => setAlertConfig(null)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-slate-800/90 border border-white/10 rounded-3xl p-8 max-w-md w-full mx-4 shadow-2xl text-center relative overflow-hidden"
+            >
+              {/* Decorative top accent line */}
+              <div className={`absolute top-0 left-0 w-full h-1.5 ${
+                alertConfig.type === 'success' ? 'bg-emerald-500' :
+                alertConfig.type === 'warning' ? 'bg-amber-500' :
+                'bg-red-500'
+              }`} />
+              
+              <div className={`w-16 h-16 rounded-full mx-auto mb-4 border flex items-center justify-center ${
+                alertConfig.type === 'success' ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' :
+                alertConfig.type === 'warning' ? 'bg-amber-500/10 border-amber-500/30 text-amber-400' :
+                'bg-red-500/10 border-red-500/30 text-red-400'
+              }`}>
+                {alertConfig.type === 'success' ? (
+                  <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
+                ) : alertConfig.type === 'warning' ? (
+                  <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                ) : (
+                  <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                )}
+              </div>
+
+              <h3 className="text-xl font-bold text-slate-100 mb-2">
+                {alertConfig.type === 'success' ? 'Success' : alertConfig.type === 'warning' ? 'Warning' : 'Error'}
+              </h3>
+              <p className="text-slate-300 text-sm mb-6 whitespace-pre-line">
+                {alertConfig.message}
+              </p>
+
+              <button
+                onClick={() => setAlertConfig(null)}
+                className={`w-full py-3 rounded-xl font-semibold transition-all shadow-md ${
+                  alertConfig.type === 'success' ? 'bg-emerald-500 hover:bg-emerald-400 text-white shadow-emerald-500/20' :
+                  alertConfig.type === 'warning' ? 'bg-amber-500 hover:bg-amber-400 text-white shadow-amber-500/20' :
+                  'bg-red-500 hover:bg-red-400 text-white shadow-red-500/20'
+                }`}
+              >
+                Okay
+              </button>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
@@ -1075,19 +1213,18 @@ type ViewState = 'overview' | 'see-profile' | 'edit-profile' | 'delete-account' 
 
 const NavItem = ({ icon: Icon, label, active, onClick, isNavOpen, isDanger = false }: any) => {
   return (
-    <button 
+    <button
       onClick={onClick}
       title={!isNavOpen ? label : undefined}
-      className={`w-full flex items-center ${isNavOpen ? 'px-3 gap-3' : 'justify-center'} py-3 rounded-xl transition-all group text-left relative overflow-hidden ${
-        active 
-          ? (isDanger ? 'bg-red-500/10 border border-red-500/30 text-red-400' : 'bg-slate-800/80 border border-slate-600/50 text-slate-200 shadow-inner')
-          : (isDanger ? 'border border-transparent hover:bg-red-500/5 text-red-500 hover:text-red-400' : 'border border-transparent hover:bg-slate-800/40 text-slate-400 hover:text-slate-200')
-      }`}
+      className={`w-full flex items-center ${isNavOpen ? 'px-3 gap-3' : 'justify-center'} py-3 rounded-xl transition-all group text-left relative overflow-hidden ${active
+        ? (isDanger ? 'bg-red-500/10 border border-red-500/30 text-red-400' : 'bg-slate-800/80 border border-slate-600/50 text-slate-200 shadow-inner')
+        : (isDanger ? 'border border-transparent hover:bg-red-500/5 text-red-500 hover:text-red-400' : 'border border-transparent hover:bg-slate-800/40 text-slate-400 hover:text-slate-200')
+        }`}
     >
       <Icon className="w-5 h-5 shrink-0 relative z-10" />
       <AnimatePresence>
         {isNavOpen && (
-          <motion.span 
+          <motion.span
             initial={{ opacity: 0, width: 0 }}
             animate={{ opacity: 1, width: 'auto' }}
             exit={{ opacity: 0, width: 0 }}
@@ -1122,7 +1259,7 @@ export default function PatientDashboard() {
   };
 
   const languages = [
-    'English', 'Hindi', 'Gujarati', 'Marathi', 'Bengali', 'Telugu', 
+    'English', 'Hindi', 'Gujarati', 'Marathi', 'Bengali', 'Telugu',
     'Tamil', 'Urdu', 'Kannada', 'Odia', 'Malayalam'
   ];
 
@@ -1142,7 +1279,7 @@ export default function PatientDashboard() {
           <div className="flex items-center gap-2 bg-slate-900 border border-white/10 rounded-lg px-3 py-1.5 focus-within:ring-2 focus-within:ring-teal-500 transition-all">
             <Globe className="w-4 h-4 text-slate-400" />
             <div className="w-40">
-              <CustomDropdown 
+              <CustomDropdown
                 value={language}
                 onChange={setLanguage}
                 options={languages}
@@ -1153,13 +1290,13 @@ export default function PatientDashboard() {
       </header>
 
       <div className="flex-1 flex flex-col md:flex-row h-[calc(100vh-4rem)] overflow-hidden">
-        <motion.aside 
+        <motion.aside
           animate={{ width: isNavOpen ? 256 : 80 }}
           transition={{ duration: 0.3, ease: 'easeInOut' }}
           className="border-r border-white/5 bg-slate-900/30 flex flex-col overflow-y-auto overflow-x-hidden shrink-0 z-20"
         >
           <div className={`p-4 flex ${isNavOpen ? 'justify-end' : 'justify-center'} border-b border-white/5`}>
-            <button 
+            <button
               onClick={() => setIsNavOpen(!isNavOpen)}
               className="p-2 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition-colors"
             >
@@ -1173,7 +1310,7 @@ export default function PatientDashboard() {
             </div>
             <AnimatePresence>
               {isNavOpen && (
-                <motion.div 
+                <motion.div
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: 'auto' }}
                   exit={{ opacity: 0, height: 0 }}
@@ -1189,7 +1326,7 @@ export default function PatientDashboard() {
           <div className="p-4 flex flex-col gap-2 flex-1">
             <AnimatePresence>
               {isNavOpen && (
-                <motion.div 
+                <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
@@ -1199,38 +1336,38 @@ export default function PatientDashboard() {
                 </motion.div>
               )}
             </AnimatePresence>
-            
-            <NavItem 
-              icon={LayoutDashboard} 
-              label="Dashboard Home" 
-              active={activeView === 'overview'} 
-              onClick={() => setActiveView('overview')} 
-              isNavOpen={isNavOpen} 
+
+            <NavItem
+              icon={LayoutDashboard}
+              label="Dashboard Home"
+              active={activeView === 'overview'}
+              onClick={() => setActiveView('overview')}
+              isNavOpen={isNavOpen}
             />
-            <NavItem 
-              icon={User} 
-              label="See Profile" 
-              active={activeView === 'see-profile'} 
-              onClick={() => setActiveView('see-profile')} 
-              isNavOpen={isNavOpen} 
+            <NavItem
+              icon={User}
+              label="See Profile"
+              active={activeView === 'see-profile'}
+              onClick={() => setActiveView('see-profile')}
+              isNavOpen={isNavOpen}
             />
 
-            <NavItem 
-              icon={Trash2} 
-              label="Delete Account" 
-              active={showDeleteModal} 
-              onClick={() => setShowDeleteModal(true)} 
-              isNavOpen={isNavOpen} 
+            <NavItem
+              icon={Trash2}
+              label="Delete Account"
+              active={showDeleteModal}
+              onClick={() => setShowDeleteModal(true)}
+              isNavOpen={isNavOpen}
               isDanger={true}
             />
           </div>
 
           <div className="p-4 border-t border-white/5">
-            <NavItem 
-              icon={LogOut} 
-              label="Log Out" 
-              onClick={handleLogout} 
-              isNavOpen={isNavOpen} 
+            <NavItem
+              icon={LogOut}
+              label="Log Out"
+              onClick={handleLogout}
+              isNavOpen={isNavOpen}
             />
           </div>
         </motion.aside>
@@ -1238,7 +1375,7 @@ export default function PatientDashboard() {
         <main className="flex-1 overflow-hidden relative bg-slate-900/20 p-0 md:p-6">
           <div className="h-full bg-slate-900/40 backdrop-blur-xl md:rounded-2xl border-y md:border border-white/5 relative overflow-hidden shadow-2xl shadow-black/50">
             <div className="absolute top-0 inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-white/10 to-transparent z-10"></div>
-            
+
             <AnimatePresence mode="wait">
               <motion.div
                 key={activeView}
@@ -1263,11 +1400,11 @@ export default function PatientDashboard() {
 
       <AnimatePresence>
         {showDeleteModal && (
-          <div 
+          <div
             className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center cursor-none"
             onClick={() => setShowDeleteModal(false)}
           >
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
@@ -1281,15 +1418,15 @@ export default function PatientDashboard() {
               <p className="text-slate-400 text-sm mb-6 cursor-none">
                 Are you absolutely sure you want to permanently delete your account? All your medical records and history will be lost. This action cannot be undone.
               </p>
-              
+
               <div className="flex gap-4 cursor-none">
-                <button 
+                <button
                   onClick={() => setShowDeleteModal(false)}
                   className="flex-1 px-4 py-2 bg-slate-700/50 hover:bg-slate-700 text-slate-200 rounded-xl transition-colors font-medium border border-white/5 cursor-none"
                 >
                   Cancel
                 </button>
-                <button 
+                <button
                   onClick={async () => {
                     try {
                       await authService.deleteAccount();
