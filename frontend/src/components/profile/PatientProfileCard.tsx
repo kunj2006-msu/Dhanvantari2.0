@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import { Mail, Calendar, User, Activity, Edit3, ShieldCheck } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 interface PatientProfileCardProps {
   data: any;
@@ -7,6 +8,7 @@ interface PatientProfileCardProps {
 }
 
 export default function PatientProfileCard({ data, onEdit }: PatientProfileCardProps) {
+  const { t } = useTranslation();
   return (
     <div className="bg-slate-800/40 backdrop-blur-xl border border-white/10 rounded-3xl p-8 shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] relative overflow-hidden cursor-none">
       {/* Decorative background glow */}
@@ -22,7 +24,7 @@ export default function PatientProfileCard({ data, onEdit }: PatientProfileCardP
             <h2 className="text-2xl font-bold text-white mb-1 cursor-none">{data.fullName || 'Unknown User'}</h2>
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-teal-500/10 border border-teal-500/20 text-teal-300 text-xs font-semibold tracking-wide cursor-none">
               <ShieldCheck className="w-3.5 h-3.5 cursor-none" />
-              Patient Passport
+              {t('personalDetails')}
             </div>
           </div>
         </div>
@@ -33,7 +35,7 @@ export default function PatientProfileCard({ data, onEdit }: PatientProfileCardP
             <div className="bg-slate-900/50 rounded-xl p-4 border border-white/5 cursor-none">
               <div className="flex items-center gap-2 text-slate-400 mb-1 cursor-none">
                 <Mail className="w-4 h-4 cursor-none" />
-                <span className="text-xs uppercase tracking-wider font-semibold cursor-none">Email Address</span>
+                <span className="text-xs uppercase tracking-wider font-semibold cursor-none">{t('emailAddress')}</span>
               </div>
               <div className="text-slate-200 font-medium cursor-none">{data.email || 'Not provided'}</div>
             </div>
@@ -41,7 +43,7 @@ export default function PatientProfileCard({ data, onEdit }: PatientProfileCardP
             <div className="bg-slate-900/50 rounded-xl p-4 border border-white/5 cursor-none">
               <div className="flex items-center gap-2 text-slate-400 mb-1 cursor-none">
                 <Calendar className="w-4 h-4 cursor-none" />
-                <span className="text-xs uppercase tracking-wider font-semibold cursor-none">Date of Birth</span>
+                <span className="text-xs uppercase tracking-wider font-semibold cursor-none">{t('age')}</span>
               </div>
               <div className="text-slate-200 font-medium cursor-none">
                 {data.dateOfBirth ? data.dateOfBirth.split('-').reverse().join('-') : 'Not provided'}
@@ -51,7 +53,7 @@ export default function PatientProfileCard({ data, onEdit }: PatientProfileCardP
             <div className="bg-slate-900/50 rounded-xl p-4 border border-white/5 cursor-none">
               <div className="flex items-center gap-2 text-slate-400 mb-1 cursor-none">
                 <User className="w-4 h-4 cursor-none" />
-                <span className="text-xs uppercase tracking-wider font-semibold cursor-none">Gender</span>
+                <span className="text-xs uppercase tracking-wider font-semibold cursor-none">{t('gender')}</span>
               </div>
               <div className="text-slate-200 font-medium cursor-none">{data.gender || 'Not specified'}</div>
             </div>
@@ -60,7 +62,7 @@ export default function PatientProfileCard({ data, onEdit }: PatientProfileCardP
               <div className="absolute right-0 top-0 w-16 h-16 bg-red-500/10 rounded-full blur-2xl cursor-none"></div>
               <div className="flex items-center gap-2 text-slate-400 mb-1 relative z-10 cursor-none">
                 <Activity className="w-4 h-4 text-red-400 cursor-none" />
-                <span className="text-xs uppercase tracking-wider font-semibold cursor-none">Blood Group</span>
+                <span className="text-xs uppercase tracking-wider font-semibold cursor-none">{t('bloodGroup')}</span>
               </div>
               <div className="text-red-300 font-bold text-lg relative z-10 cursor-none">{data.bloodGroup || 'Unknown'}</div>
             </div>
@@ -91,7 +93,7 @@ export default function PatientProfileCard({ data, onEdit }: PatientProfileCardP
           className="flex items-center gap-2 px-6 py-2.5 bg-slate-700/50 hover:bg-slate-600/50 text-slate-200 border border-white/10 rounded-xl transition-colors shadow-lg cursor-none group"
         >
           <Edit3 className="w-4 h-4 group-hover:text-teal-400 transition-colors cursor-none" />
-          <span className="font-medium cursor-none">Edit Profile</span>
+          <span className="font-medium cursor-none">{t('editProfile')}</span>
         </motion.button>
       </div>
     </div>

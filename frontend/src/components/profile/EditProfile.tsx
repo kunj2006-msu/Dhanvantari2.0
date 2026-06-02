@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { authService } from '../../services/authService';
 import { Loader2, Save, X, MapPin } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import MapModal from '../MapModal';
 
 interface EditProfileProps {
@@ -12,6 +13,7 @@ interface EditProfileProps {
 const COMMON_CONDITIONS = ["Diabetes", "Hypertension", "Asthma", "Thyroid Disorder", "Heart Disease", "Arthritis", "Migraine", "None"];
 
 export default function EditProfile({ onCancel, onSuccess }: EditProfileProps) {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -168,7 +170,7 @@ export default function EditProfile({ onCancel, onSuccess }: EditProfileProps) {
         <div className="absolute top-0 left-0 w-64 h-64 bg-teal-500/10 rounded-full blur-3xl -ml-32 -mt-32 pointer-events-none cursor-none"></div>
 
         <div className="flex justify-between items-center mb-8 relative z-10 cursor-none">
-          <h2 className="text-2xl font-bold text-white cursor-none">Edit Profile</h2>
+          <h2 className="text-2xl font-bold text-white cursor-none">{t('editProfile')}</h2>
           <button 
             onClick={onCancel}
             className="p-2 bg-white/5 hover:bg-white/10 rounded-full transition-colors cursor-none group"
@@ -194,7 +196,7 @@ export default function EditProfile({ onCancel, onSuccess }: EditProfileProps) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 cursor-none">
             {/* Common Fields */}
             <div className="cursor-none">
-              <label className="block text-sm font-medium text-slate-300 mb-2 cursor-none">Full Name</label>
+              <label className="block text-sm font-medium text-slate-300 mb-2 cursor-none">{t('fullName')}</label>
               <input
                 type="text"
                 name="fullName"
@@ -209,7 +211,7 @@ export default function EditProfile({ onCancel, onSuccess }: EditProfileProps) {
             {role === 'ROLE_PATIENT' && (
               <>
                 <div className="cursor-none">
-                  <label className="block text-sm font-medium text-slate-300 mb-2 cursor-none">Date of Birth</label>
+                  <label className="block text-sm font-medium text-slate-300 mb-2 cursor-none">{t('age')}</label>
                   <input
                     type="date"
                     name="dateOfBirth"
@@ -220,14 +222,14 @@ export default function EditProfile({ onCancel, onSuccess }: EditProfileProps) {
                 </div>
 
                 <div className="cursor-none">
-                  <label className="block text-sm font-medium text-slate-300 mb-2 cursor-none">Gender</label>
+                  <label className="block text-sm font-medium text-slate-300 mb-2 cursor-none">{t('gender')}</label>
                   <select
                     name="gender"
                     value={formData.gender}
                     onChange={handleInputChange}
                     className="w-full px-4 py-3 bg-slate-900/50 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 text-white transition-all cursor-none"
                   >
-                    <option value="">Select Gender</option>
+                    <option value="">{t('selectGender')}</option>
                     <option value="Male">Male</option>
                     <option value="Female">Female</option>
                     <option value="Other">Other</option>
@@ -235,14 +237,14 @@ export default function EditProfile({ onCancel, onSuccess }: EditProfileProps) {
                 </div>
 
                 <div className="cursor-none">
-                  <label className="block text-sm font-medium text-slate-300 mb-2 cursor-none">Blood Group</label>
+                  <label className="block text-sm font-medium text-slate-300 mb-2 cursor-none">{t('bloodGroup')}</label>
                   <select
                     name="bloodGroup"
                     value={formData.bloodGroup}
                     onChange={handleInputChange}
                     className="w-full px-4 py-3 bg-slate-900/50 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 text-white transition-all cursor-none"
                   >
-                    <option value="">Select Blood Group</option>
+                    <option value="">{t('selectBloodGroup')}</option>
                     <option value="A+">A+</option>
                     <option value="A-">A-</option>
                     <option value="B+">B+</option>
@@ -331,7 +333,7 @@ export default function EditProfile({ onCancel, onSuccess }: EditProfileProps) {
           {role === 'ROLE_DOCTOR' && (
             <div className="bg-slate-900/30 p-5 rounded-xl border border-white/5 cursor-none">
               <div className="flex justify-between items-center mb-4 cursor-none">
-                 <label className="block text-sm font-medium text-slate-300 cursor-none">Clinic Address</label>
+                 <label className="block text-sm font-medium text-slate-300 cursor-none">{t('address')}</label>
                  <button
                    type="button"
                    onClick={() => setIsMapOpen(true)}
@@ -359,7 +361,7 @@ export default function EditProfile({ onCancel, onSuccess }: EditProfileProps) {
               onClick={onCancel}
               className="px-6 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl transition-colors font-medium cursor-none"
             >
-              Cancel
+              {t('cancel')}
             </button>
             
             <button
@@ -368,7 +370,7 @@ export default function EditProfile({ onCancel, onSuccess }: EditProfileProps) {
               className="px-6 py-2.5 bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-400 hover:to-emerald-400 text-white rounded-xl transition-all font-medium flex items-center gap-2 shadow-lg shadow-teal-500/20 disabled:opacity-70 disabled:cursor-none cursor-none"
             >
               {saving ? <Loader2 className="w-5 h-5 animate-spin cursor-none" /> : <Save className="w-5 h-5 cursor-none" />}
-              Save Changes
+              {t('saveChanges')}
             </button>
           </div>
         </form>

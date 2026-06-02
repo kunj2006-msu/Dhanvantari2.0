@@ -10,56 +10,59 @@ import { CustomDropdown } from '../components/CustomDropdown';
 import { CustomDatePicker } from '../components/CustomDatePicker';
 import Profile from '../components/profile/Profile';
 
-const OverviewCanvas = ({ onSelectView }: { onSelectView: (view: any) => void }) => (
-  <div className="flex-1 flex items-center justify-center p-8 h-full">
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-5xl">
-      <motion.button
-        whileHover={{ scale: 1.02 }}
-        whileTap={{ scale: 0.98 }}
-        onClick={() => onSelectView('mental-health')}
-        className="bg-slate-800/40 border border-teal-500/20 hover:border-teal-500/50 rounded-2xl p-8 flex flex-col items-center gap-4 text-center group transition-colors shadow-lg shadow-teal-500/5"
-      >
-        <div className="w-16 h-16 rounded-2xl bg-teal-500/10 flex items-center justify-center group-hover:bg-teal-500/20 transition-colors">
-          <Brain className="w-8 h-8 text-teal-400" />
-        </div>
-        <div>
-          <h3 className="text-xl font-bold text-slate-200 group-hover:text-teal-300 transition-colors">Mental Health Support</h3>
-          <p className="text-sm text-slate-400 mt-2">Empathetic AI counseling and support</p>
-        </div>
-      </motion.button>
+const OverviewCanvas = ({ onSelectView }: { onSelectView: (view: any) => void }) => {
+  const { t } = useTranslation();
+  return (
+    <div className="flex-1 flex items-center justify-center p-8 h-full">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-5xl">
+        <motion.button
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          onClick={() => onSelectView('mental-health')}
+          className="bg-slate-800/40 border border-teal-500/20 hover:border-teal-500/50 rounded-2xl p-8 flex flex-col items-center gap-4 text-center group transition-colors shadow-lg shadow-teal-500/5"
+        >
+          <div className="w-16 h-16 rounded-2xl bg-teal-500/10 flex items-center justify-center group-hover:bg-teal-500/20 transition-colors">
+            <Brain className="w-8 h-8 text-teal-400" />
+          </div>
+          <div>
+            <h3 className="text-xl font-bold text-slate-200 group-hover:text-teal-300 transition-colors">{t('mentalHealthSupportTitle')}</h3>
+            <p className="text-sm text-slate-400 mt-2">{t('mentalHealthSupportDesc')}</p>
+          </div>
+        </motion.button>
 
-      <motion.button
-        whileHover={{ scale: 1.02 }}
-        whileTap={{ scale: 0.98 }}
-        onClick={() => onSelectView('triage')}
-        className="bg-slate-800/40 border border-cyan-500/20 hover:border-cyan-500/50 rounded-2xl p-8 flex flex-col items-center gap-4 text-center group transition-colors shadow-lg shadow-cyan-500/5"
-      >
-        <div className="w-16 h-16 rounded-2xl bg-cyan-500/10 flex items-center justify-center group-hover:bg-cyan-500/20 transition-colors">
-          <Stethoscope className="w-8 h-8 text-cyan-400" />
-        </div>
-        <div>
-          <h3 className="text-xl font-bold text-slate-200 group-hover:text-cyan-300 transition-colors">AI Symptom Triage</h3>
-          <p className="text-sm text-slate-400 mt-2">Clinical assessment and recommendations</p>
-        </div>
-      </motion.button>
+        <motion.button
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          onClick={() => onSelectView('triage')}
+          className="bg-slate-800/40 border border-cyan-500/20 hover:border-cyan-500/50 rounded-2xl p-8 flex flex-col items-center gap-4 text-center group transition-colors shadow-lg shadow-cyan-500/5"
+        >
+          <div className="w-16 h-16 rounded-2xl bg-cyan-500/10 flex items-center justify-center group-hover:bg-cyan-500/20 transition-colors">
+            <Stethoscope className="w-8 h-8 text-cyan-400" />
+          </div>
+          <div>
+            <h3 className="text-xl font-bold text-slate-200 group-hover:text-cyan-300 transition-colors">{t('aiSymptomTriageTitle')}</h3>
+            <p className="text-sm text-slate-400 mt-2">{t('aiSymptomTriageDesc')}</p>
+          </div>
+        </motion.button>
 
-      <motion.button
-        whileHover={{ scale: 1.02 }}
-        whileTap={{ scale: 0.98 }}
-        onClick={() => onSelectView('appointments')}
-        className="bg-slate-800/40 border border-indigo-500/20 hover:border-indigo-500/50 rounded-2xl p-8 flex flex-col items-center gap-4 text-center group transition-colors shadow-lg shadow-indigo-500/5"
-      >
-        <div className="w-16 h-16 rounded-2xl bg-indigo-500/10 flex items-center justify-center group-hover:bg-indigo-500/20 transition-colors">
-          <CalendarPlus className="w-8 h-8 text-indigo-400" />
-        </div>
-        <div>
-          <h3 className="text-xl font-bold text-slate-200 group-hover:text-indigo-300 transition-colors">Book Appointment</h3>
-          <p className="text-sm text-slate-400 mt-2">Schedule visits with healthcare professionals</p>
-        </div>
-      </motion.button>
+        <motion.button
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          onClick={() => onSelectView('appointments')}
+          className="bg-slate-800/40 border border-indigo-500/20 hover:border-indigo-500/50 rounded-2xl p-8 flex flex-col items-center gap-4 text-center group transition-colors shadow-lg shadow-indigo-500/5"
+        >
+          <div className="w-16 h-16 rounded-2xl bg-indigo-500/10 flex items-center justify-center group-hover:bg-indigo-500/20 transition-colors">
+            <CalendarPlus className="w-8 h-8 text-indigo-400" />
+          </div>
+          <div>
+            <h3 className="text-xl font-bold text-slate-200 group-hover:text-indigo-300 transition-colors">{t('bookAppointmentTitle')}</h3>
+            <p className="text-sm text-slate-400 mt-2">{t('bookAppointmentDesc')}</p>
+          </div>
+        </motion.button>
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 const ChatInterface = ({
   isHistoryOpen, setIsHistoryOpen, historyTitle, disclaimer,
@@ -1365,7 +1368,7 @@ const NavItem = ({ icon: Icon, label, active, onClick, isNavOpen, isDanger = fal
 };
 
 export default function PatientDashboard() {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [activeView, setActiveView] = useState<ViewState>('overview');
   const [isNavOpen, setIsNavOpen] = useState(true);
   const [isHistoryOpen, setIsHistoryOpen] = useState(true);
@@ -1454,7 +1457,7 @@ export default function PatientDashboard() {
                   className="flex flex-col items-center overflow-hidden whitespace-nowrap"
                 >
                   <h2 className="text-lg font-semibold text-slate-200">{userName}</h2>
-                  <span className="text-xs text-slate-500 mt-1">Patient</span>
+                  <span className="text-xs text-slate-500 mt-1">{t('patientRole')}</span>
                 </motion.div>
               )}
             </AnimatePresence>
@@ -1469,21 +1472,21 @@ export default function PatientDashboard() {
                   exit={{ opacity: 0 }}
                   className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2 px-2 mt-2 whitespace-nowrap"
                 >
-                  Account
+                  {t('accountSection')}
                 </motion.div>
               )}
             </AnimatePresence>
 
             <NavItem
               icon={LayoutDashboard}
-              label="Dashboard Home"
+              label={t('dashboardHome')}
               active={activeView === 'overview'}
               onClick={() => setActiveView('overview')}
               isNavOpen={isNavOpen}
             />
             <NavItem
               icon={User}
-              label="See Profile"
+              label={t('seeProfile')}
               active={activeView === 'see-profile'}
               onClick={() => setActiveView('see-profile')}
               isNavOpen={isNavOpen}
@@ -1491,7 +1494,7 @@ export default function PatientDashboard() {
 
             <NavItem
               icon={Trash2}
-              label="Delete Account"
+              label={t('deleteAccount')}
               active={showDeleteModal}
               onClick={() => setShowDeleteModal(true)}
               isNavOpen={isNavOpen}
@@ -1502,7 +1505,7 @@ export default function PatientDashboard() {
           <div className="p-4 border-t border-white/5">
             <NavItem
               icon={LogOut}
-              label="Log Out"
+              label={t('logOut')}
               onClick={handleLogout}
               isNavOpen={isNavOpen}
             />
