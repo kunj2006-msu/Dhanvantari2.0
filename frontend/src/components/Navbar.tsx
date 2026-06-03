@@ -15,7 +15,7 @@ export default function Navbar() {
     <nav className="fixed top-0 w-full z-40 bg-slate-900/50 backdrop-blur-md border-b border-white/10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          
+
           <div className="flex-shrink-0 flex items-center gap-3">
             <span className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-teal-400 to-cyan-400 font-serif">
               Dhanvantari
@@ -48,9 +48,8 @@ export default function Navbar() {
                         setSelectedLang(lang);
                         setIsOpen(false);
                       }}
-                      className={`block w-full text-left px-4 py-2 text-sm hover:bg-teal-900/50 transition-colors ${
-                        selectedLang === lang ? 'text-cyan-400 font-semibold bg-teal-900/30' : 'text-gray-200'
-                      }`}
+                      className={`block w-full text-left px-4 py-2 text-sm hover:bg-teal-900/50 transition-colors ${selectedLang === lang ? 'text-cyan-400 font-semibold bg-teal-900/30' : 'text-gray-200'
+                        }`}
                     >
                       {lang}
                     </button>

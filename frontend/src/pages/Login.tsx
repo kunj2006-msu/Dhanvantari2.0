@@ -27,11 +27,11 @@ export default function Login() {
     } catch (error: any) {
       // Check if the backend specifically rejected the credentials (401 or 403)
       if (error?.response?.status === 403 || error?.response?.status === 401) {
-          setError("Invalid email or password. If you are new here, please register first.");
-      } 
+        setError("Invalid email or password. If you are new here, please register first.");
+      }
       // Else, it's a network error or server crash
       else {
-          setError("Unable to connect to the server. Please try again later.");
+        setError("Unable to connect to the server. Please try again later.");
       }
     } finally {
       setIsLoading(false);

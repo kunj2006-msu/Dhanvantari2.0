@@ -3,6 +3,7 @@
     "axios": "^1.16.1",
     "framer-motion": "^12.40.0",
     "i18next": "^26.3.0",
+    "lucide-react": "^1.17.0",
     "react-i18next": "^17.0.8"
   }
 }
