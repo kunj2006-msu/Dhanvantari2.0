@@ -35,18 +35,20 @@ public class DoctorAppointmentController {
             return ResponseEntity.badRequest().body(Map.of("error", "Doctor profile not found"));
         }
 
-        List<Appointment> appointments = appointmentRepository.findByDoctorUserEmailOrderByScheduledTimeDesc(email);
+        java.time.ZonedDateTime now = java.time.ZonedDateTime.now(java.time.ZoneId.systemDefault());
+        List<Appointment> appointments = appointmentRepository.findByDoctorUserEmailAndScheduledTimeAfterOrderByScheduledTimeAsc(email, now);
         
         DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
         DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("hh:mm a", Locale.ENGLISH);
 
         List<Map<String, Object>> responseList = appointments.stream().map(apt -> {
+            java.time.ZonedDateTime localTime = apt.getScheduledTime().withZoneSameInstant(java.time.ZoneId.systemDefault());
             Map<String, Object> map = new HashMap<>();
             map.put("id", apt.getId().toString());
             map.put("patientId", apt.getPatient().getId().toString());
             map.put("patientName", apt.getPatient().getFullName());
-            map.put("date", apt.getScheduledTime().format(dateFormatter));
-            map.put("time", apt.getScheduledTime().format(timeFormatter));
+            map.put("date", localTime.format(dateFormatter));
+            map.put("time", localTime.format(timeFormatter));
             map.put("reason", apt.getSymptomsNotes() != null ? apt.getSymptomsNotes() : "Routine Checkup");
             map.put("gender", apt.getPatient().getGender() != null ? apt.getPatient().getGender() : "Unknown");
             map.put("bloodGroup", apt.getPatient().getBloodGroup() != null ? apt.getPatient().getBloodGroup() : "Unknown");

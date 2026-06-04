@@ -14,10 +14,11 @@ interface CustomDatePickerProps {
   value: string;
   onChange: (date: string) => void;
   minDate?: string;
+  maxDate?: string;
   placeholder?: string;
 }
 
-export const CustomDatePicker = ({ value, onChange, minDate, placeholder = "Select Date" }: CustomDatePickerProps) => {
+export const CustomDatePicker = ({ value, onChange, minDate, maxDate, placeholder = "Select Date" }: CustomDatePickerProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [currentMonth, setCurrentMonth] = useState(() => {
     if (value) {
@@ -88,15 +89,25 @@ export const CustomDatePicker = ({ value, onChange, minDate, placeholder = "Sele
   const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
 
   const isDateDisabled = (day: number) => {
-    if (!minDate) return false;
+    if (!minDate && !maxDate) return false;
     const dateToCheck = new Date(year, month, day);
     dateToCheck.setHours(0, 0, 0, 0);
     
-    const [mYear, mMonth, mDay] = minDate.split('-').map(Number);
-    const minLocal = new Date(mYear, mMonth - 1, mDay);
-    minLocal.setHours(0, 0, 0, 0);
+    if (minDate) {
+      const [mYear, mMonth, mDay] = minDate.split('-').map(Number);
+      const minLocal = new Date(mYear, mMonth - 1, mDay);
+      minLocal.setHours(0, 0, 0, 0);
+      if (dateToCheck < minLocal) return true;
+    }
     
-    return dateToCheck < minLocal;
+    if (maxDate) {
+      const [mxYear, mxMonth, mxDay] = maxDate.split('-').map(Number);
+      const maxLocal = new Date(mxYear, mxMonth - 1, mxDay);
+      maxLocal.setHours(0, 0, 0, 0);
+      if (dateToCheck > maxLocal) return true;
+    }
+    
+    return false;
   };
 
   const isSelectedDate = (day: number) => {

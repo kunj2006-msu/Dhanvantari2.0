@@ -118,6 +118,7 @@ export interface Doctor {
     clinicAddress: string;
     latitude?: number;
     longitude?: number;
+    firstAvailableDate?: string;
 }
 
 export const fetchDoctors = async (state?: string, city?: string, specialization?: string): Promise<Doctor[]> => {
@@ -275,5 +276,35 @@ export const fetchPatientTriageHistory = async (patientId: string): Promise<Pati
     } catch (error) {
         console.error("Error fetching patient triage history:", error);
         throw error;
+    }
+};
+
+export interface LocationState {
+    id: number;
+    name: string;
+}
+
+export interface LocationCity {
+    id: number;
+    name: string;
+}
+
+export const fetchStates = async (): Promise<LocationState[]> => {
+    try {
+        const response = await axios.get('http://localhost:8080/api/locations/states');
+        return response.data;
+    } catch (error) {
+        console.error("Error fetching states:", error);
+        return [];
+    }
+};
+
+export const fetchCitiesByState = async (stateId: number): Promise<LocationCity[]> => {
+    try {
+        const response = await axios.get(`http://localhost:8080/api/locations/states/${stateId}/cities`);
+        return response.data;
+    } catch (error) {
+        console.error("Error fetching cities by state:", error);
+        return [];
     }
 };

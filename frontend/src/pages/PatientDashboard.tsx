@@ -1,5 +1,5 @@
-import { sendTriageMessage, fetchChatHistory, deleteChatSession, fetchSessionMessages, sendMentalHealthMessage, saveMoodSession, fetchMoodHistory, fetchDoctors, bookAppointment, fetchAppointments } from '../services/api';
-import type { Doctor } from '../services/api';
+import { sendTriageMessage, fetchChatHistory, deleteChatSession, fetchSessionMessages, sendMentalHealthMessage, saveMoodSession, fetchMoodHistory, fetchDoctors, bookAppointment, fetchAppointments, fetchStates, fetchCitiesByState } from '../services/api';
+import type { Doctor, LocationState, LocationCity } from '../services/api';
 import { Brain, Stethoscope, CalendarPlus, User, LogOut, LayoutDashboard, Globe, Trash2, Menu, PanelLeftClose, PanelLeftOpen, Send, MapPin } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -9,6 +9,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { CustomDropdown } from '../components/CustomDropdown';
 import { CustomDatePicker } from '../components/CustomDatePicker';
 import Profile from '../components/profile/Profile';
+import { SearchableSelect } from '../components/SearchableSelect';
 
 const OverviewCanvas = ({ onSelectView }: { onSelectView: (view: any) => void }) => {
   const { t } = useTranslation();
@@ -799,6 +800,18 @@ const TriageCanvas = ({ isHistoryOpen, setIsHistoryOpen, language }: any) => {
     </>
   );
 };
+
+const get15DaysAfter = (dateStr: string | undefined): string | undefined => {
+  if (!dateStr) return undefined;
+  const [year, month, day] = dateStr.split('-').map(Number);
+  const date = new Date(year, month - 1, day);
+  date.setDate(date.getDate() + 15);
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+};
+
 const AppointmentsCanvas = ({ isHistoryOpen, setIsHistoryOpen }: any) => {
   const { t } = useTranslation();
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
@@ -811,6 +824,8 @@ const AppointmentsCanvas = ({ isHistoryOpen, setIsHistoryOpen }: any) => {
   const [duration, setDuration] = useState<string>('');
   const [intensity, setIntensity] = useState<string>('Mild');
   const [doctors, setDoctors] = useState<Doctor[]>([]);
+  const [states, setStates] = useState<LocationState[]>([]);
+  const [cities, setCities] = useState<LocationCity[]>([]);
 
   const [appointments, setAppointments] = useState<any[]>([]);
   const [alertConfig, setAlertConfig] = useState<{ show: boolean, type: 'success' | 'error' | 'warning', message: string } | null>(null);
@@ -826,18 +841,40 @@ const AppointmentsCanvas = ({ isHistoryOpen, setIsHistoryOpen }: any) => {
   }, []);
 
   useEffect(() => {
+    const loadStates = async () => {
+      try {
+        const fetchedStates = await fetchStates();
+        setStates(fetchedStates);
+      } catch (err) {
+        console.error("Failed to load states:", err);
+      }
+    };
+    loadStates();
+  }, []);
+
+  const handleStateChange = async (stateName: string) => {
+    setSelectedState(stateName);
+    setSelectedCity('');
+    setSelectedDoctorId('');
+    setCities([]);
+    const stateObj = states.find(s => s.name === stateName);
+    if (stateObj) {
+      try {
+        const fetchedCities = await fetchCitiesByState(stateObj.id);
+        setCities(fetchedCities);
+      } catch (err) {
+        console.error("Failed to load cities:", err);
+      }
+    }
+  };
+
+  useEffect(() => {
     const loadDoctors = async () => {
       const data = await fetchDoctors(selectedState, selectedCity, selectedSpecialty);
       setDoctors(data);
     };
     loadDoctors();
   }, [selectedState, selectedCity, selectedSpecialty]);
-
-  const locationData: Record<string, string[]> = {
-    "Gujarat": ["Ahmedabad", "Vadodara", "Surat", "Rajkot", "Godhra", "Gandhinagar"],
-    "Maharashtra": ["Mumbai", "Pune", "Nagpur", "Nashik"],
-    "Delhi": ["New Delhi"]
-  };
 
   const timeSlots = ['09:00 AM', '10:00 AM', '11:30 AM', '02:00 PM', '03:30 PM', '04:15 PM'];
 
@@ -871,6 +908,7 @@ const AppointmentsCanvas = ({ isHistoryOpen, setIsHistoryOpen }: any) => {
     setPrimarySymptom('');
     setDuration('');
     setIntensity('Mild');
+    setCities([]);
   };
 
   const handleConfirmAppointment = async (e: React.FormEvent) => {
@@ -912,6 +950,8 @@ const AppointmentsCanvas = ({ isHistoryOpen, setIsHistoryOpen }: any) => {
   };
 
   const selectedDoctorProfile = doctors.find(d => d.id === selectedDoctorId);
+  const minBookingDate = selectedDoctorProfile?.firstAvailableDate || today;
+  const maxBookingDate = selectedDoctorProfile?.firstAvailableDate ? get15DaysAfter(selectedDoctorProfile.firstAvailableDate) : undefined;
 
   return (
     <div className="flex h-full w-full">
@@ -985,26 +1025,22 @@ const AppointmentsCanvas = ({ isHistoryOpen, setIsHistoryOpen }: any) => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-slate-400">{t('stateLabel')}</label>
-                  <CustomDropdown
+                  <SearchableSelect
                     value={selectedState}
-                    onChange={(val) => {
-                      setSelectedState(val);
-                      setSelectedCity('');
-                      setSelectedDoctorId('');
-                    }}
-                    options={Object.keys(locationData)}
+                    onChange={handleStateChange}
+                    options={states.map(s => ({ value: s.name, label: s.name }))}
                     placeholder={t('selectState')}
                   />
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-slate-400">{t('cityLabel')}</label>
-                  <CustomDropdown
+                  <SearchableSelect
                     value={selectedCity}
                     onChange={(val) => {
                       setSelectedCity(val);
                       setSelectedDoctorId('');
                     }}
-                    options={selectedState ? locationData[selectedState] : []}
+                    options={cities.map(c => ({ value: c.name, label: c.name }))}
                     placeholder={selectedState ? t('selectCity') : t('selectCityFirst')}
                     disabled={!selectedState}
                   />
@@ -1066,7 +1102,8 @@ const AppointmentsCanvas = ({ isHistoryOpen, setIsHistoryOpen }: any) => {
                   <CustomDatePicker
                     value={date}
                     onChange={setDate}
-                    minDate={today}
+                    minDate={minBookingDate}
+                    maxDate={maxBookingDate}
                   />
                 </div>
 

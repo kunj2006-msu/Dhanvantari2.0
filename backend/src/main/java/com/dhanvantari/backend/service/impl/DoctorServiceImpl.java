@@ -15,6 +15,7 @@ import java.util.stream.Collectors;
 public class DoctorServiceImpl implements DoctorService {
 
     private final DoctorRepository doctorRepository;
+    private final com.dhanvantari.backend.repository.AppointmentRepository appointmentRepository;
 
     @Override
     public List<DoctorDTO> getDoctors(String state, String city, String specialization) {
@@ -29,6 +30,50 @@ public class DoctorServiceImpl implements DoctorService {
                 .collect(Collectors.toList());
     }
 
+    private String calculateFirstAvailableDate(java.util.UUID doctorId) {
+        java.time.LocalDate date = java.time.LocalDate.now(java.time.ZoneId.systemDefault());
+        java.time.format.DateTimeFormatter timeFormatter = java.time.format.DateTimeFormatter.ofPattern("hh:mm a", java.util.Locale.ENGLISH);
+        java.util.List<String> allSlots = java.util.List.of("09:00 AM", "10:00 AM", "11:30 AM", "02:00 PM", "03:30 PM", "04:15 PM");
+
+        while (true) {
+            java.time.ZonedDateTime startOfDay = date.atStartOfDay(java.time.ZoneId.systemDefault());
+            java.time.ZonedDateTime endOfDay = date.plusDays(1).atStartOfDay(java.time.ZoneId.systemDefault()).minusNanos(1);
+
+            java.util.List<com.dhanvantari.backend.entity.Appointment> dayAppointments = appointmentRepository
+                    .findByDoctorIdAndScheduledTimeBetweenAndStatus(
+                            doctorId, startOfDay, endOfDay, com.dhanvantari.backend.entity.AppointmentStatus.SCHEDULED);
+
+            if (dayAppointments.size() >= 6) {
+                date = date.plusDays(1);
+                continue;
+            }
+
+            // If it is today, check if any slots are in the future and not booked
+            if (date.equals(java.time.LocalDate.now(java.time.ZoneId.systemDefault()))) {
+                java.time.LocalTime nowTime = java.time.LocalTime.now(java.time.ZoneId.systemDefault());
+                boolean hasFutureSlot = false;
+                for (String slot : allSlots) {
+                    java.time.LocalTime slotTime = java.time.LocalTime.parse(slot, timeFormatter);
+                    if (slotTime.isAfter(nowTime)) {
+                        // check if this slot is already booked
+                        boolean slotBooked = dayAppointments.stream()
+                                .anyMatch(apt -> apt.getScheduledTime().toLocalTime().equals(slotTime));
+                        if (!slotBooked) {
+                            hasFutureSlot = true;
+                            break;
+                        }
+                    }
+                }
+                if (!hasFutureSlot) {
+                    date = date.plusDays(1);
+                    continue;
+                }
+            }
+
+            return date.toString();
+        }
+    }
+
     private DoctorDTO convertToDTO(Doctor doctor) {
         return DoctorDTO.builder()
                 .id(doctor.getId())
@@ -40,6 +85,7 @@ public class DoctorServiceImpl implements DoctorService {
                 .clinicAddress(doctor.getClinicAddress())
                 .latitude(doctor.getLatitude())
                 .longitude(doctor.getLongitude())
+                .firstAvailableDate(calculateFirstAvailableDate(doctor.getId()))
                 .build();
     }
 }

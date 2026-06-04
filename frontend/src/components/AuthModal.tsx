@@ -7,20 +7,15 @@ import { CustomDropdown } from './CustomDropdown';
 import { CustomDatePicker } from './CustomDatePicker';
 import MapModal from './MapModal';
 import { MapPin, CheckCircle2 } from 'lucide-react';
+import { SearchableSelect } from './SearchableSelect';
+import { fetchStates, fetchCitiesByState } from '../services/api';
+import type { LocationState, LocationCity } from '../services/api';
 
 interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
   initialUserType: 'patient' | 'doctor';
 }
-
-const locationData: Record<string, string[]> = {
-  "Gujarat": ["Ahmedabad", "Vadodara", "Surat", "Rajkot", "Godhra", "Gandhinagar"],
-  "Maharashtra": ["Mumbai", "Pune", "Nagpur", "Nashik"],
-  "Delhi": ["New Delhi"]
-};
-
-
 
 export default function AuthModal({ isOpen, onClose, initialUserType }: AuthModalProps) {
   // Form View State
@@ -42,6 +37,8 @@ export default function AuthModal({ isOpen, onClose, initialUserType }: AuthModa
   const [bloodGroup, setBloodGroup] = useState('');
   const [selectedState, setSelectedState] = useState('');
   const [selectedCity, setSelectedCity] = useState('');
+  const [states, setStates] = useState<LocationState[]>([]);
+  const [cities, setCities] = useState<LocationCity[]>([]);
   const [degree, setDegree] = useState('');
   const [specialization, setSpecialization] = useState('');
   const [registrationNumber, setRegistrationNumber] = useState('');
@@ -80,6 +77,17 @@ export default function AuthModal({ isOpen, onClose, initialUserType }: AuthModa
       setWeightKg('');
       setIsMapOpen(false);
       setLocationCoords(null);
+      setCities([]);
+      
+      const loadStates = async () => {
+        try {
+          const fetchedStates = await fetchStates();
+          setStates(fetchedStates);
+        } catch (err) {
+          console.error("Failed to load states:", err);
+        }
+      };
+      loadStates();
     }
   }, [isOpen, isLogin, initialUserType]);
 
@@ -109,6 +117,21 @@ export default function AuthModal({ isOpen, onClose, initialUserType }: AuthModa
       setAge('');
     }
   }, [dob]);
+
+  const handleStateChange = async (stateName: string) => {
+    setSelectedState(stateName);
+    setSelectedCity('');
+    setCities([]);
+    const stateObj = states.find(s => s.name === stateName);
+    if (stateObj) {
+      try {
+        const fetchedCities = await fetchCitiesByState(stateObj.id);
+        setCities(fetchedCities);
+      } catch (err) {
+        console.error("Failed to load cities:", err);
+      }
+    }
+  };
 
   // Handle Checkbox Toggles for Conditions
   const handleConditionToggle = (condition: string) => {
@@ -483,23 +506,20 @@ export default function AuthModal({ isOpen, onClose, initialUserType }: AuthModa
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-slate-300 mb-1">State</label>
-                      <CustomDropdown
+                      <SearchableSelect
                         value={selectedState}
-                        onChange={(val) => {
-                          setSelectedState(val);
-                          setSelectedCity(''); // Reset city when state changes
-                        }}
-                        options={Object.keys(locationData)}
+                        onChange={handleStateChange}
+                        options={states.map(s => ({ value: s.name, label: s.name }))}
                         placeholder="Select State"
                       />
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-slate-300 mb-1">City</label>
-                      <CustomDropdown
+                      <SearchableSelect
                         value={selectedCity}
                         onChange={setSelectedCity}
                         disabled={!selectedState}
-                        options={selectedState ? locationData[selectedState] : []}
+                        options={cities.map(c => ({ value: c.name, label: c.name }))}
                         placeholder={selectedState ? "Select City" : "Select a State first"}
                       />
                     </div>

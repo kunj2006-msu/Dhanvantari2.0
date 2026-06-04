@@ -17,6 +17,7 @@ const ScheduleCanvas = ({ isHistoryOpen, appointments, onRefresh }: any) => {
   const [triageHistory, setTriageHistory] = useState<PatientTriageSession[]>([]);
   const [triageLoading, setTriageLoading] = useState(false);
   const [selectedSession, setSelectedSession] = useState<PatientTriageSession | null>(null);
+  const [dateFilter, setDateFilter] = useState('');
 
   useEffect(() => {
     if (selectedPatient) {
@@ -57,6 +58,12 @@ const ScheduleCanvas = ({ isHistoryOpen, appointments, onRefresh }: any) => {
   };
 
   const scheduledAppointments = appointments.filter((apt: any) => apt.status === 'SCHEDULED');
+  const filteredAppointments = scheduledAppointments.filter((apt: any) => {
+    if (!dateFilter) return true;
+    const [year, month, day] = dateFilter.split('-');
+    const formattedFilterDate = `${day}/${month}/${year}`;
+    return apt.date === formattedFilterDate;
+  });
 
   return (
     <div className="flex h-full w-full cursor-none">
@@ -70,16 +77,32 @@ const ScheduleCanvas = ({ isHistoryOpen, appointments, onRefresh }: any) => {
             transition={{ duration: 0.3 }}
             className="border-r border-white/5 bg-slate-900/40 flex flex-col overflow-hidden shrink-0 z-20 cursor-none"
           >
-            <div className="p-4 border-b border-white/5 flex items-center justify-between min-w-[320px] h-16 cursor-none">
-              <h3 className="font-semibold text-slate-200 cursor-none">Upcoming Patients</h3>
+            <div className="p-4 border-b border-white/5 flex flex-col gap-2 min-w-[320px] cursor-none">
+              <div className="flex items-center justify-between cursor-none">
+                <h3 className="font-semibold text-slate-200 cursor-none">Upcoming Patients</h3>
+                {dateFilter && (
+                  <button
+                    onClick={() => setDateFilter('')}
+                    className="text-xs text-teal-400 hover:text-teal-300 transition-colors cursor-none"
+                  >
+                    Clear Filter
+                  </button>
+                )}
+              </div>
+              <input
+                type="date"
+                value={dateFilter}
+                onChange={(e) => setDateFilter(e.target.value)}
+                className="bg-slate-900/50 border border-white/10 text-white placeholder-slate-500 focus:ring-teal-500/50 rounded-xl px-3 py-1.5 text-xs w-full outline-none focus:ring-2 cursor-none"
+              />
             </div>
 
             <div className="p-4 min-w-[320px] overflow-y-auto cursor-none custom-scrollbar">
               <div className="text-sm flex flex-col gap-3 cursor-none">
-                {scheduledAppointments.length === 0 ? (
-                  <div className="text-slate-400 text-center py-8">No scheduled appointments for today.</div>
+                {filteredAppointments.length === 0 ? (
+                  <div className="text-slate-400 text-center py-8">No scheduled appointments found.</div>
                 ) : (
-                  scheduledAppointments.map((apt: any) => (
+                  filteredAppointments.map((apt: any) => (
                     <button
                       key={apt.id}
                       onClick={() => setSelectedPatient(apt)}
