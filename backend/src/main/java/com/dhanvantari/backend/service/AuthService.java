@@ -164,6 +164,8 @@ public class AuthService {
                 response.put("dateOfBirth", patient.getDateOfBirth() != null ? patient.getDateOfBirth().toString() : null);
                 response.put("gender", patient.getGender());
                 response.put("bloodGroup", patient.getBloodGroup());
+                response.put("heightCm", patient.getHeightCm());
+                response.put("weightKg", patient.getWeightKg());
                 
                 String conditions = patient.getPreMedicalConditions();
                 if (conditions != null && !conditions.trim().isEmpty()) {
@@ -240,6 +242,21 @@ public class AuthService {
                 }
             } else if (updates.containsKey("preMedicalConditions") && updates.get("preMedicalConditions") == null) {
                 patient.setPreMedicalConditions(null);
+            }
+
+            if (updates.containsKey("heightCm")) {
+                Object h = updates.get("heightCm");
+                if (h == null) patient.setHeightCm(null);
+                else if (h instanceof Number) patient.setHeightCm(java.math.BigDecimal.valueOf(((Number) h).doubleValue()));
+                else if (h instanceof String && !((String) h).trim().isEmpty()) patient.setHeightCm(new java.math.BigDecimal((String) h));
+                else patient.setHeightCm(null);
+            }
+            if (updates.containsKey("weightKg")) {
+                Object w = updates.get("weightKg");
+                if (w == null) patient.setWeightKg(null);
+                else if (w instanceof Number) patient.setWeightKg(java.math.BigDecimal.valueOf(((Number) w).doubleValue()));
+                else if (w instanceof String && !((String) w).trim().isEmpty()) patient.setWeightKg(new java.math.BigDecimal((String) w));
+                else patient.setWeightKg(null);
             }
             
             patientRepository.save(patient);

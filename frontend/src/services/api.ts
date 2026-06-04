@@ -194,3 +194,86 @@ export const fetchAppointments = async (): Promise<Appointment[]> => {
         return [];
     }
 };
+
+export interface DoctorAppointment {
+    id: string;
+    patientId: string;
+    patientName: string;
+    date: string;
+    time: string;
+    reason: string;
+    age: number;
+    gender: string;
+    bloodGroup: string;
+    pastHistory: string;
+    heightCm?: number;
+    weightKg?: number;
+    doctorNotes: string | null;
+    status: string;
+}
+
+export interface TriageMessage {
+    role: string;
+    content: string;
+}
+
+export interface PatientTriageSession {
+    sessionId: number;
+    title: string;
+    languageCode: string;
+    createdAt: string;
+    messages: TriageMessage[];
+}
+
+export const fetchDoctorAppointments = async (): Promise<DoctorAppointment[]> => {
+    const token = localStorage.getItem('dhanvantari_token');
+    if (!token || token === 'null' || token === 'undefined') {
+        return [];
+    }
+
+    try {
+        const response = await axios.get('http://localhost:8080/api/doctor/appointments', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Error fetching doctor appointments:", error);
+        throw error;
+    }
+};
+
+export const updateAppointmentNotes = async (appointmentId: string, doctorNotes: string): Promise<any> => {
+    const token = localStorage.getItem('dhanvantari_token');
+    if (!token || token === 'null' || token === 'undefined') {
+        throw new Error("User not authenticated.");
+    }
+
+    try {
+        const response = await axios.put(`http://localhost:8080/api/doctor/appointments/${appointmentId}/notes`, {
+            doctorNotes
+        }, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Error updating appointment notes:", error);
+        throw error;
+    }
+};
+
+export const fetchPatientTriageHistory = async (patientId: string): Promise<PatientTriageSession[]> => {
+    const token = localStorage.getItem('dhanvantari_token');
+    if (!token || token === 'null' || token === 'undefined') {
+        return [];
+    }
+
+    try {
+        const response = await axios.get(`http://localhost:8080/api/doctor/patients/${patientId}/triage-history`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Error fetching patient triage history:", error);
+        throw error;
+    }
+};

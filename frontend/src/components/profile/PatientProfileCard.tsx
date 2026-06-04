@@ -66,6 +66,16 @@ export default function PatientProfileCard({ data, onEdit }: PatientProfileCardP
               </div>
               <div className="text-red-300 font-bold text-lg relative z-10 cursor-none">{data.bloodGroup || 'Unknown'}</div>
             </div>
+
+            <div className="bg-slate-900/50 rounded-xl p-4 border border-white/5 cursor-none">
+              <div className="flex items-center gap-2 text-slate-400 mb-1 cursor-none">
+                <Activity className="w-4 h-4 text-teal-400 cursor-none" />
+                <span className="text-xs uppercase tracking-wider font-semibold cursor-none">Physical Metrics</span>
+              </div>
+              <div className="text-slate-200 font-medium cursor-none">
+                {data.heightCm ? `${data.heightCm} cm` : '--'} / {data.weightKg ? `${data.weightKg} kg` : '--'}
+              </div>
+            </div>
           </div>
 
           <div className="bg-slate-900/50 rounded-xl p-5 border border-white/5 cursor-none">

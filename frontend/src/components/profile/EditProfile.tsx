@@ -132,6 +132,8 @@ export default function EditProfile({ onCancel, onSuccess }: EditProfileProps) {
            combined.push(formData.otherCondition.trim());
         }
         payload.preMedicalConditions = combined.join(', ');
+        payload.heightCm = formData.heightCm ? parseFloat(formData.heightCm) : null;
+        payload.weightKg = formData.weightKg ? parseFloat(formData.weightKg) : null;
         // remove the temporary arrays/strings from payload
         delete payload.medicalConditions;
         delete payload.otherCondition;
@@ -254,6 +256,32 @@ export default function EditProfile({ onCancel, onSuccess }: EditProfileProps) {
                     <option value="AB+">AB+</option>
                     <option value="AB-">AB-</option>
                   </select>
+                </div>
+
+                <div className="cursor-none">
+                  <label className="block text-sm font-medium text-slate-300 mb-2 cursor-none">Height (cm)</label>
+                  <input
+                    type="number"
+                    step="any"
+                    name="heightCm"
+                    value={formData.heightCm || ''}
+                    onChange={handleInputChange}
+                    className="w-full px-4 py-3 bg-slate-900/50 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 text-white placeholder-slate-500 transition-all cursor-none"
+                    placeholder="e.g. 175"
+                  />
+                </div>
+
+                <div className="cursor-none">
+                  <label className="block text-sm font-medium text-slate-300 mb-2 cursor-none">Weight (kg)</label>
+                  <input
+                    type="number"
+                    step="any"
+                    name="weightKg"
+                    value={formData.weightKg || ''}
+                    onChange={handleInputChange}
+                    className="w-full px-4 py-3 bg-slate-900/50 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 text-white placeholder-slate-500 transition-all cursor-none"
+                    placeholder="e.g. 70"
+                  />
                 </div>
               </>
             )}

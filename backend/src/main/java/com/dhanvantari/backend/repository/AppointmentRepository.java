@@ -10,4 +10,5 @@ import java.util.UUID;
 @Repository
 public interface AppointmentRepository extends JpaRepository<Appointment, UUID> {
     List<Appointment> findByPatientUserEmailOrderByScheduledTimeDesc(String email);
+    List<Appointment> findByDoctorUserEmailOrderByScheduledTimeDesc(String email);
 }

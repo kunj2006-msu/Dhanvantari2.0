@@ -31,4 +31,6 @@ public interface DoctorRepository extends JpaRepository<Doctor, UUID> {
         @Param("city") String city, 
         @Param("specialization") String specialization
     );
+
+    java.util.Optional<Doctor> findByUserEmail(String email);
 }

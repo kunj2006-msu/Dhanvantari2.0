@@ -20,6 +20,8 @@ const locationData: Record<string, string[]> = {
   "Delhi": ["New Delhi"]
 };
 
+
+
 export default function AuthModal({ isOpen, onClose, initialUserType }: AuthModalProps) {
   // Form View State
   const [isLogin, setIsLogin] = useState(true);
@@ -28,7 +30,7 @@ export default function AuthModal({ isOpen, onClose, initialUserType }: AuthModa
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [isMapOpen, setIsMapOpen] = useState(false);
-  const [locationCoords, setLocationCoords] = useState<{lat: number, lng: number} | null>(null);
+  const [locationCoords, setLocationCoords] = useState<{ lat: number, lng: number } | null>(null);
 
   // Form Data State
   const [email, setEmail] = useState('');
@@ -47,6 +49,8 @@ export default function AuthModal({ isOpen, onClose, initialUserType }: AuthModa
   const [clinicAddress, setClinicAddress] = useState('');
   const [preMedicalConditions, setPreMedicalConditions] = useState<string[]>([]);
   const [otherCondition, setOtherCondition] = useState('');
+  const [heightCm, setHeightCm] = useState('');
+  const [weightKg, setWeightKg] = useState('');
 
   const navigate = useNavigate();
 
@@ -72,6 +76,8 @@ export default function AuthModal({ isOpen, onClose, initialUserType }: AuthModa
       setClinicAddress('');
       setPreMedicalConditions([]);
       setOtherCondition('');
+      setHeightCm('');
+      setWeightKg('');
       setIsMapOpen(false);
       setLocationCoords(null);
     }
@@ -89,7 +95,7 @@ export default function AuthModal({ isOpen, onClose, initialUserType }: AuthModa
       } else {
         birthDate = new Date(dob);
       }
-      
+
       if (!isNaN(birthDate.getTime())) {
         const today = new Date();
         let calculatedAge = today.getFullYear() - birthDate.getFullYear();
@@ -131,11 +137,11 @@ export default function AuthModal({ isOpen, onClose, initialUserType }: AuthModa
       if (isLogin) {
         // --- REAL LOGIN LOGIC ---
         const response = await authService.login({ email, password });
-        
+
         // NOTE: The Spring Boot backend AuthController now returns { token, name, role } in the response.
         const userRole = response?.role;
         const expectedRole = "ROLE_" + initialUserType.toUpperCase();
-        
+
         if (userRole && userRole !== expectedRole) {
           authService.logout(); // Clear the token that was just saved
           setErrorMessage(`Access Denied: Please use the ${userRole === 'ROLE_DOCTOR' ? 'Doctor' : 'Patient'} Login portal.`);
@@ -145,7 +151,7 @@ export default function AuthModal({ isOpen, onClose, initialUserType }: AuthModa
 
         const userName = response?.name || (initialUserType === 'patient' ? 'Patient' : 'Doctor');
         localStorage.setItem('userName', userName);
-        
+
         if (initialUserType === 'doctor') {
           localStorage.setItem('userSpecialization', response?.specialization || 'Specialist');
         }
@@ -186,7 +192,9 @@ export default function AuthModal({ isOpen, onClose, initialUserType }: AuthModa
             age: parseInt(age),
             gender,
             bloodGroup,
-            preMedicalConditions: finalConditions.join(', ')
+            preMedicalConditions: finalConditions.join(', '),
+            heightCm: heightCm ? parseFloat(heightCm) : undefined,
+            weightKg: weightKg ? parseFloat(weightKg) : undefined
           }),
           // Doctor specific
           ...(initialUserType === 'doctor' && {
@@ -208,7 +216,7 @@ export default function AuthModal({ isOpen, onClose, initialUserType }: AuthModa
       }
     } catch (error: any) {
       const errorString = error?.response?.data?.message || error?.message || String(error);
-      
+
       if (errorString.includes("Email is already in use") || error?.response?.status === 400 || error?.response?.status === 409) {
         setErrorMessage("An account with this email already exists. Please log in.");
       } else {
@@ -375,6 +383,30 @@ export default function AuthModal({ isOpen, onClose, initialUserType }: AuthModa
                       />
                     </div>
                   </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-slate-300 mb-1">Height (cm)</label>
+                      <input 
+                        type="number" 
+                        step="any"
+                        value={heightCm} 
+                        onChange={(e) => setHeightCm(e.target.value)} 
+                        className="w-full px-4 py-2 bg-slate-900/50 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-500/50 transition-all" 
+                        placeholder="e.g. 175" 
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-slate-300 mb-1">Weight (kg)</label>
+                      <input 
+                        type="number" 
+                        step="any"
+                        value={weightKg} 
+                        onChange={(e) => setWeightKg(e.target.value)} 
+                        className="w-full px-4 py-2 bg-slate-900/50 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-500/50 transition-all" 
+                        placeholder="e.g. 70" 
+                      />
+                    </div>
+                  </div>
                   <div>
                     <label className="block text-sm font-medium text-slate-300 mb-2">Pre-medical Conditions</label>
                     <div className="grid grid-cols-2 gap-y-2 gap-x-4 mb-3">
@@ -477,13 +509,12 @@ export default function AuthModal({ isOpen, onClose, initialUserType }: AuthModa
                       type="button"
                       disabled={!selectedState || !selectedCity}
                       onClick={() => setIsMapOpen(true)}
-                      className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl border border-white/10 transition-all cursor-none ${
-                        !selectedState || !selectedCity
+                      className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl border border-white/10 transition-all cursor-none ${!selectedState || !selectedCity
                           ? 'bg-slate-800/50 text-slate-500 cursor-not-allowed'
                           : locationCoords
-                          ? 'bg-teal-500/10 text-teal-400 border-teal-500/50'
-                          : 'bg-slate-800 hover:bg-slate-700 text-slate-200'
-                      }`}
+                            ? 'bg-teal-500/10 text-teal-400 border-teal-500/50'
+                            : 'bg-slate-800 hover:bg-slate-700 text-slate-200'
+                        }`}
                     >
                       {locationCoords ? (
                         <>
@@ -532,14 +563,14 @@ export default function AuthModal({ isOpen, onClose, initialUserType }: AuthModa
           </div>
         </motion.div>
       </div>
-      <MapModal 
-        isOpen={isMapOpen} 
-        onClose={() => setIsMapOpen(false)} 
+      <MapModal
+        isOpen={isMapOpen}
+        onClose={() => setIsMapOpen(false)}
         onConfirm={(lat, lng, address) => {
           setLocationCoords({ lat, lng });
           setClinicAddress(address);
           setIsMapOpen(false);
-        }} 
+        }}
         city={selectedCity}
         state={selectedState}
       />
