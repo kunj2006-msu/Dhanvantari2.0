@@ -5,6 +5,7 @@ import com.dhanvantari.backend.entity.*;
 import com.dhanvantari.backend.repository.*;
 import com.dhanvantari.backend.service.AppointmentService;
 import com.dhanvantari.backend.dto.AppointmentDTO;
+import com.dhanvantari.backend.exception.SlotFullException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -68,6 +69,14 @@ public class AppointmentServiceImpl implements AppointmentService {
             throw new IllegalArgumentException("Invalid time format. Expected hh:mm AM/PM", e);
         }
 
+        // Perform strict count query immediately before saving
+        long count = appointmentRepository.countByDoctorIdAndScheduledTimeAndStatus(
+                doctor.getId(), scheduledTime, AppointmentStatus.SCHEDULED
+        );
+        if (count >= 2) {
+            throw new SlotFullException("Sorry, this time slot was just booked by someone else. Please select another time.");
+        }
+
         // 6. Build and save Appointment
         Appointment appointment = Appointment.builder()
                 .doctor(doctor)
@@ -95,31 +104,28 @@ public class AppointmentServiceImpl implements AppointmentService {
                     .findByDoctorIdAndScheduledTimeBetweenAndStatus(
                             doctorId, startOfDay, endOfDay, AppointmentStatus.SCHEDULED);
 
-            if (dayAppointments.size() >= 6) {
-                date = date.plusDays(1);
-                continue;
-            }
+            LocalTime nowTime = date.equals(LocalDate.now(java.time.ZoneId.systemDefault()))
+                    ? LocalTime.now(java.time.ZoneId.systemDefault())
+                    : null;
 
-            // If it is today, check if any slots are in the future and not booked
-            if (date.equals(LocalDate.now(java.time.ZoneId.systemDefault()))) {
-                LocalTime nowTime = LocalTime.now(java.time.ZoneId.systemDefault());
-                boolean hasFutureSlot = false;
-                for (String slot : allSlots) {
-                    LocalTime slotTime = LocalTime.parse(slot, timeFormatter);
-                    if (slotTime.isAfter(nowTime)) {
-                        // check if this slot is already booked
-                        boolean slotBooked = dayAppointments.stream()
-                                .anyMatch(apt -> apt.getScheduledTime().toLocalTime().equals(slotTime));
-                        if (!slotBooked) {
-                            hasFutureSlot = true;
-                            break;
-                        }
-                    }
-                }
-                if (!hasFutureSlot) {
-                    date = date.plusDays(1);
+            boolean hasAvailableSlot = false;
+            for (String slot : allSlots) {
+                LocalTime slotTime = LocalTime.parse(slot, timeFormatter);
+                if (nowTime != null && !slotTime.isAfter(nowTime)) {
                     continue;
                 }
+                long count = dayAppointments.stream()
+                        .filter(apt -> apt.getScheduledTime().withZoneSameInstant(java.time.ZoneId.systemDefault()).toLocalTime().equals(slotTime))
+                        .count();
+                if (count < 2) {
+                    hasAvailableSlot = true;
+                    break;
+                }
+            }
+
+            if (!hasAvailableSlot) {
+                date = date.plusDays(1);
+                continue;
             }
 
             return date.toString();
@@ -150,6 +156,37 @@ public class AppointmentServiceImpl implements AppointmentService {
                             .doctorNotes(apt.getDoctorNotes())
                             .symptomsNotes(apt.getSymptomsNotes())
                             .build();
+                })
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<String> getAvailableSlots(java.util.UUID doctorId, String dateStr) {
+        LocalDate date = LocalDate.parse(dateStr);
+        ZonedDateTime startOfDay = date.atStartOfDay(java.time.ZoneId.systemDefault());
+        ZonedDateTime endOfDay = date.plusDays(1).atStartOfDay(java.time.ZoneId.systemDefault()).minusNanos(1);
+
+        List<Appointment> dayAppointments = appointmentRepository.findByDoctorIdAndScheduledTimeBetweenAndStatus(
+                doctorId, startOfDay, endOfDay, AppointmentStatus.SCHEDULED);
+
+        List<String> allSlots = List.of("09:00 AM", "10:00 AM", "11:30 AM", "02:00 PM", "03:30 PM", "04:15 PM");
+        DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("hh:mm a", Locale.ENGLISH);
+
+        LocalTime nowTime = date.equals(LocalDate.now(java.time.ZoneId.systemDefault()))
+                ? LocalTime.now(java.time.ZoneId.systemDefault())
+                : null;
+
+        return allSlots.stream()
+                .filter(slot -> {
+                    LocalTime slotTime = LocalTime.parse(slot, timeFormatter);
+                    if (nowTime != null && !slotTime.isAfter(nowTime)) {
+                        return false;
+                    }
+                    long count = dayAppointments.stream()
+                            .filter(apt -> apt.getScheduledTime().withZoneSameInstant(java.time.ZoneId.systemDefault()).toLocalTime().equals(slotTime))
+                            .count();
+                    return count < 2;
                 })
                 .collect(Collectors.toList());
     }

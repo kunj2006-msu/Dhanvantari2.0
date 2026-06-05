@@ -7,4 +7,5 @@ import java.util.List;
 public interface AppointmentService {
     String bookAppointment(AppointmentRequest request, String patientEmail);
     List<AppointmentDTO> getPatientAppointments(String patientEmail);
+    List<String> getAvailableSlots(java.util.UUID doctorId, String date);
 }

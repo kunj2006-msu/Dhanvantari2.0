@@ -1,4 +1,4 @@
-import { sendTriageMessage, fetchChatHistory, deleteChatSession, fetchSessionMessages, sendMentalHealthMessage, saveMoodSession, fetchMoodHistory, fetchDoctors, bookAppointment, fetchAppointments, fetchStates, fetchCitiesByState } from '../services/api';
+import { sendTriageMessage, fetchChatHistory, deleteChatSession, fetchSessionMessages, sendMentalHealthMessage, saveMoodSession, fetchMoodHistory, fetchDoctors, bookAppointment, fetchAppointments, fetchStates, fetchCitiesByState, fetchAvailableSlots } from '../services/api';
 import type { Doctor, LocationState, LocationCity } from '../services/api';
 import { Brain, Stethoscope, CalendarPlus, User, LogOut, LayoutDashboard, Globe, Trash2, Menu, PanelLeftClose, PanelLeftOpen, Send, MapPin } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
@@ -830,6 +830,7 @@ const AppointmentsCanvas = ({ isHistoryOpen, setIsHistoryOpen }: any) => {
   const [appointments, setAppointments] = useState<any[]>([]);
   const [alertConfig, setAlertConfig] = useState<{ show: boolean, type: 'success' | 'error' | 'warning', message: string } | null>(null);
   const [selectedAppointment, setSelectedAppointment] = useState<any | null>(null);
+  const [availableTimeSlots, setAvailableTimeSlots] = useState<string[]>([]);
 
   const loadAppointments = async () => {
     const data = await fetchAppointments();
@@ -876,25 +877,24 @@ const AppointmentsCanvas = ({ isHistoryOpen, setIsHistoryOpen }: any) => {
     loadDoctors();
   }, [selectedState, selectedCity, selectedSpecialty]);
 
-  const timeSlots = ['09:00 AM', '10:00 AM', '11:30 AM', '02:00 PM', '03:30 PM', '04:15 PM'];
-
-  // Filter slots to only show future times if "today" is selected
-  const availableTimeSlots = timeSlots.filter(slot => {
-    if (!date) return true;
-
-    const today = new Date();
-    // Format today to match your datepicker's output (DD-MM-YYYY)
-    const todayString = `${String(today.getDate()).padStart(2, '0')}-${String(today.getMonth() + 1).padStart(2, '0')}-${today.getFullYear()}`;
-
-    if (date !== todayString) return true;
-
-    const [time, period] = slot.split(' ');
-    let [hours] = time.split(':').map(Number);
-    if (period === 'PM' && hours !== 12) hours += 12;
-    if (period === 'AM' && hours === 12) hours = 0;
-
-    return hours > today.getHours();
-  });
+  useEffect(() => {
+    const loadAvailableSlots = async () => {
+      if (!selectedDoctorId || !date) {
+        setAvailableTimeSlots([]);
+        return;
+      }
+      try {
+        const [d, m, y] = date.split('-');
+        const apiDate = `${y}-${m}-${d}`;
+        const slots = await fetchAvailableSlots(selectedDoctorId, apiDate);
+        setAvailableTimeSlots(slots);
+      } catch (err) {
+        console.error("Failed to load available slots:", err);
+        setAvailableTimeSlots([]);
+      }
+    };
+    loadAvailableSlots();
+  }, [date, selectedDoctorId]);
 
   const today = new Date().toISOString().split('T')[0];
 
@@ -1110,7 +1110,11 @@ const AppointmentsCanvas = ({ isHistoryOpen, setIsHistoryOpen }: any) => {
                 <div className="space-y-2 pt-2">
                   <label className="text-sm font-medium text-slate-400 mb-2 block">{t('availableTimeSlots')}</label>
                   <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3">
-                    {availableTimeSlots.length > 0 ? (
+                    {!selectedDoctorId || !date ? (
+                      <div className="col-span-full text-sm text-slate-400 italic bg-slate-800/20 p-3 rounded-xl text-center border border-white/5 shadow-inner">
+                        Please select a doctor and date to view available time slots.
+                      </div>
+                    ) : availableTimeSlots.length > 0 ? (
                       availableTimeSlots.map(time => (
                         <button
                           key={time}
@@ -1126,7 +1130,7 @@ const AppointmentsCanvas = ({ isHistoryOpen, setIsHistoryOpen }: any) => {
                       ))
                     ) : (
                       <div className="col-span-full text-sm text-amber-400 italic bg-amber-400/10 p-3 rounded-xl text-center border border-amber-400/20 shadow-inner">
-                        No more slots available today. Please select tomorrow.
+                        No slots available for the selected date. Please select another date.
                       </div>
                     )}
                   </div>

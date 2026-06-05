@@ -39,4 +39,12 @@ public class AppointmentController {
         List<AppointmentDTO> appointments = appointmentService.getPatientAppointments(currentUser.getUsername());
         return ResponseEntity.ok(appointments);
     }
+
+    @GetMapping("/available-slots")
+    public ResponseEntity<List<String>> getAvailableSlots(
+            @RequestParam java.util.UUID doctorId,
+            @RequestParam String date) {
+        List<String> slots = appointmentService.getAvailableSlots(doctorId, date);
+        return ResponseEntity.ok(slots);
+    }
 }

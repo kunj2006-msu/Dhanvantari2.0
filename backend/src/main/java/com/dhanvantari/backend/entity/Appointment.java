@@ -9,9 +9,7 @@ import java.time.ZonedDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "appointments", uniqueConstraints = {
-    @UniqueConstraint(columnNames = {"doctor_id", "scheduled_time"})
-})
+@Table(name = "appointments")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

@@ -159,9 +159,26 @@ export const bookAppointment = async (payload: AppointmentPayload): Promise<{ me
             headers: { 'Authorization': `Bearer ${token}` }
         });
         return response.data;
-    } catch (error) {
+    } catch (error: any) {
         console.error("Error booking appointment:", error);
-        throw new Error("Failed to book appointment.");
+        const serverMessage = error.response?.data?.message || "Failed to book appointment.";
+        throw new Error(serverMessage);
+    }
+};
+
+export const fetchAvailableSlots = async (doctorId: string, date: string): Promise<string[]> => {
+    const token = localStorage.getItem('dhanvantari_token');
+    if (!token) return [];
+
+    try {
+        const response = await axios.get(`http://localhost:8080/api/patient/appointments/available-slots`, {
+            params: { doctorId, date },
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Error fetching available slots:", error);
+        return [];
     }
 };
 
