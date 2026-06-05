@@ -3,12 +3,14 @@ package com.dhanvantari.backend.config;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.core.annotation.Order;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
 @Slf4j
+@Order(1)
 public class DatabaseInitializer implements CommandLineRunner {
 
     private final JdbcTemplate jdbcTemplate;
@@ -16,7 +18,10 @@ public class DatabaseInitializer implements CommandLineRunner {
     @Override
     public void run(String... args) throws Exception {
         try {
-            log.info("Checking database constraints to drop unique doctor-time limitation...");
+            log.info("Checking database constraints to drop unique doctor-time limitation and role checks...");
+            
+            // Drop users role check constraint to allow ROLE_ADMIN
+            jdbcTemplate.execute("ALTER TABLE users DROP CONSTRAINT IF EXISTS users_role_check");
             
             // Drop common constraint names
             jdbcTemplate.execute("ALTER TABLE appointments DROP CONSTRAINT IF EXISTS uk_appointments_doctor_id_scheduled_time");

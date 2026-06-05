@@ -52,4 +52,9 @@ public class Doctor {
 
     @Column(name = "longitude")
     private Double longitude;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "account_status", nullable = false, columnDefinition = "VARCHAR(50) DEFAULT 'PENDING_APPROVAL'")
+    @Builder.Default
+    private AccountStatus accountStatus = AccountStatus.PENDING_APPROVAL;
 }

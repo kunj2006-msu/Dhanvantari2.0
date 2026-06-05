@@ -2,6 +2,7 @@ package com.dhanvantari.backend.service.impl;
 
 import com.dhanvantari.backend.dto.DoctorDTO;
 import com.dhanvantari.backend.entity.Doctor;
+import com.dhanvantari.backend.entity.AccountStatus;
 import com.dhanvantari.backend.repository.DoctorRepository;
 import com.dhanvantari.backend.service.DoctorService;
 import lombok.RequiredArgsConstructor;
@@ -86,6 +87,29 @@ public class DoctorServiceImpl implements DoctorService {
                 .latitude(doctor.getLatitude())
                 .longitude(doctor.getLongitude())
                 .firstAvailableDate(calculateFirstAvailableDate(doctor.getId()))
+                .accountStatus(doctor.getAccountStatus() != null ? doctor.getAccountStatus().name() : null)
                 .build();
+    }
+
+    @Override
+    public List<DoctorDTO> getAllDoctors() {
+        List<Doctor> doctors = doctorRepository.findAll();
+        return doctors.stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @org.springframework.transaction.annotation.Transactional
+    public void updateDoctorStatus(java.util.UUID id, String statusStr) {
+        Doctor doctor = doctorRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Doctor not found with ID: " + id));
+        try {
+            AccountStatus status = AccountStatus.valueOf(statusStr.toUpperCase());
+            doctor.setAccountStatus(status);
+            doctorRepository.save(doctor);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Invalid status: " + statusStr);
+        }
     }
 }

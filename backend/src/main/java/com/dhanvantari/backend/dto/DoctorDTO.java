@@ -18,4 +18,5 @@ public class DoctorDTO {
     private Double latitude;
     private Double longitude;
     private String firstAvailableDate;
+    private String accountStatus;
 }
