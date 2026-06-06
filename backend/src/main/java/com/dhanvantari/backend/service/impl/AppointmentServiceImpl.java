@@ -43,6 +43,10 @@ public class AppointmentServiceImpl implements AppointmentService {
         Doctor doctor = doctorRepository.findById(request.getDoctorId())
                 .orElseThrow(() -> new IllegalArgumentException("Doctor not found with ID: " + request.getDoctorId()));
 
+        if (doctor.getAccountStatus() != AccountStatus.ACTIVE) {
+            throw new IllegalArgumentException("Doctor is not available for booking.");
+        }
+
         // 4. Parse incoming scheduledDate string to LocalDate
         LocalDate date;
         try {
@@ -187,6 +191,33 @@ public class AppointmentServiceImpl implements AppointmentService {
                             .filter(apt -> apt.getScheduledTime().withZoneSameInstant(java.time.ZoneId.systemDefault()).toLocalTime().equals(slotTime))
                             .count();
                     return count < 2;
+                })
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<AppointmentDTO> getUpcomingAppointmentsForDoctor(java.util.UUID doctorId) {
+        ZonedDateTime now = ZonedDateTime.now(java.time.ZoneId.systemDefault());
+        List<Appointment> appointments = appointmentRepository.findByDoctorIdAndStatusAndScheduledTimeAfterOrderByScheduledTimeAsc(
+                doctorId, AppointmentStatus.SCHEDULED, now
+        );
+
+        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+        DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("hh:mm a", Locale.ENGLISH);
+
+        return appointments.stream()
+                .map(apt -> {
+                    ZonedDateTime localTime = apt.getScheduledTime().withZoneSameInstant(java.time.ZoneId.systemDefault());
+                    return AppointmentDTO.builder()
+                            .id(apt.getId())
+                            .doctorName(apt.getDoctor().getFullName())
+                            .specialty(apt.getDoctor().getSpecialization())
+                            .patientName(apt.getPatient().getFullName())
+                            .date(localTime.format(dateFormatter))
+                            .time(localTime.format(timeFormatter))
+                            .status(apt.getStatus().name().toLowerCase())
+                            .build();
                 })
                 .collect(Collectors.toList());
     }

@@ -17,6 +17,7 @@ public class DoctorServiceImpl implements DoctorService {
 
     private final DoctorRepository doctorRepository;
     private final com.dhanvantari.backend.repository.AppointmentRepository appointmentRepository;
+    private final com.dhanvantari.backend.repository.UserRepository userRepository;
 
     @Override
     public List<DoctorDTO> getDoctors(String state, String city, String specialization) {
@@ -88,6 +89,8 @@ public class DoctorServiceImpl implements DoctorService {
                 .longitude(doctor.getLongitude())
                 .firstAvailableDate(calculateFirstAvailableDate(doctor.getId()))
                 .accountStatus(doctor.getAccountStatus() != null ? doctor.getAccountStatus().name() : null)
+                .degree(doctor.getDegree())
+                .registrationNumber(doctor.getRegistrationNumber())
                 .build();
     }
 
@@ -110,6 +113,24 @@ public class DoctorServiceImpl implements DoctorService {
             doctorRepository.save(doctor);
         } catch (IllegalArgumentException e) {
             throw new IllegalArgumentException("Invalid status: " + statusStr);
+        }
+    }
+
+    @Override
+    @org.springframework.transaction.annotation.Transactional
+    public void rejectDoctor(java.util.UUID id) {
+        Doctor doctor = doctorRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Doctor not found with ID: " + id));
+
+        if (doctor.getAccountStatus() != AccountStatus.PENDING_APPROVAL) {
+            throw new IllegalStateException("Only doctors with PENDING_APPROVAL status can be rejected");
+        }
+
+        com.dhanvantari.backend.entity.User user = doctor.getUser();
+        
+        doctorRepository.delete(doctor);
+        if (user != null) {
+            userRepository.delete(user);
         }
     }
 }

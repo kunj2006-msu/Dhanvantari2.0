@@ -269,11 +269,14 @@ public class AuthService {
         User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
         
         if (user.getRole() == com.dhanvantari.backend.entity.UserRole.ROLE_DOCTOR) {
-            doctorRepository.deleteById(user.getId());
+            com.dhanvantari.backend.entity.Doctor doctor = doctorRepository.findById(user.getId())
+                    .orElseThrow(() -> new RuntimeException("Doctor profile not found"));
+            doctor.setAccountStatus(com.dhanvantari.backend.entity.AccountStatus.SUNSETTING);
+            doctorRepository.save(doctor);
         } else if (user.getRole() == com.dhanvantari.backend.entity.UserRole.ROLE_PATIENT) {
             patientRepository.deleteById(user.getId());
+            userRepository.delete(user);
         }
-        userRepository.delete(user);
     }
 }
 

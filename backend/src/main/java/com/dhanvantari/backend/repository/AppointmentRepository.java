@@ -15,5 +15,6 @@ public interface AppointmentRepository extends JpaRepository<Appointment, UUID> 
     List<Appointment> findByDoctorUserEmailOrderByScheduledTimeDesc(String email);
     List<Appointment> findByDoctorIdAndScheduledTimeBetweenAndStatus(UUID doctorId, ZonedDateTime start, ZonedDateTime end, AppointmentStatus status);
     List<Appointment> findByDoctorUserEmailAndScheduledTimeAfterOrderByScheduledTimeAsc(String email, ZonedDateTime dateTime);
+    List<Appointment> findByDoctorIdAndStatusAndScheduledTimeAfterOrderByScheduledTimeAsc(UUID doctorId, AppointmentStatus status, ZonedDateTime dateTime);
     long countByDoctorIdAndScheduledTimeAndStatus(UUID doctorId, ZonedDateTime scheduledTime, AppointmentStatus status);
 }

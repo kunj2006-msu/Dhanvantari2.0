@@ -35,4 +35,14 @@ export const updateDoctorStatus = async (id: string, newStatus: string) => {
   return response.data;
 };
 
+export const fetchUpcomingAppointments = async (doctorId: string) => {
+  const response = await api.get(`/admin/doctors/${doctorId}/appointments/upcoming`);
+  return response.data;
+};
+
+export const rejectDoctorApplication = async (id: string) => {
+  const response = await api.delete(`/admin/doctors/${id}/reject`);
+  return response.data;
+};
+
 export default api;

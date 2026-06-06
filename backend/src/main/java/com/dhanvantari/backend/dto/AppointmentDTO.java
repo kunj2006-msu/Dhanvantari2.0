@@ -11,6 +11,7 @@ public class AppointmentDTO {
     private UUID id;
     private String doctorName;
     private String specialty;
+    private String patientName;
     private String date; // formatted as DD/MM/YYYY
     private String time; // formatted as hh:mm a
     private String status;

@@ -1,4 +1,4 @@
-import { Calendar, Users, LogOut, Stethoscope, Menu, Globe, Clock, User, FileText, Send, Trash2, MessageSquare, AlertCircle, RefreshCw, X, ArrowRight } from 'lucide-react';
+import { Calendar, Users, LogOut, Stethoscope, Menu, Globe, Clock, User, FileText, Send, Trash2, MessageSquare, AlertCircle, RefreshCw, X, ArrowRight, CheckCircle2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authService } from '../services/authService';
@@ -504,6 +504,9 @@ export default function DoctorDashboard() {
   const [isNavOpen, setIsNavOpen] = useState(true);
   const [isHistoryOpen, setIsHistoryOpen] = useState(true);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+  const [isDeleting, setIsDeleting] = useState(false);
   const [language, setLanguage] = useState('English');
   const navigate = useNavigate();
   const userName = localStorage.getItem('userName') || 'Doctor';
@@ -712,7 +715,7 @@ export default function DoctorDashboard() {
         {showDeleteModal && (
           <div
             className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center cursor-none"
-            onClick={() => setShowDeleteModal(false)}
+            onClick={() => !isDeleting && setShowDeleteModal(false)}
           >
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
@@ -724,33 +727,59 @@ export default function DoctorDashboard() {
               <div className="w-12 h-12 rounded-full bg-red-500/20 flex items-center justify-center mx-auto mb-4 border border-red-500/30">
                 <Trash2 className="w-6 h-6 text-red-500" />
               </div>
-              <h2 className="text-xl font-bold text-slate-100 mb-2 cursor-none">Delete Account?</h2>
-              <p className="text-slate-400 text-sm mb-6 cursor-none">
-                Are you absolutely sure you want to permanently delete your account? All your medical records and history will be lost. This action cannot be undone.
+              <h2 className="text-xl font-bold text-slate-100 mb-2 cursor-none">Are you sure you want to initiate account deletion?</h2>
+              <p className="text-slate-400 text-sm mb-6 cursor-none leading-relaxed text-left">
+                This will place your account in a Sunsetting phase. An Admin will not finalize your deletion until all remaining appointments are completed. During this phase, you can still log in to manage your schedule, but no new patients can book appointments with you. Once all appointments are fulfilled, the Admin will permanently delete your account, and you will no longer be able to log in.
               </p>
 
               <div className="flex gap-4 cursor-none">
                 <button
+                  disabled={isDeleting}
                   onClick={() => setShowDeleteModal(false)}
-                  className="flex-1 px-4 py-2 bg-slate-700/50 hover:bg-slate-700 text-slate-200 rounded-xl transition-colors font-medium border border-white/5 cursor-none"
+                  className="flex-1 px-4 py-2 bg-slate-700/50 hover:bg-slate-700 text-slate-200 rounded-xl transition-colors font-medium border border-white/5 cursor-none disabled:opacity-50"
                 >
                   Cancel
                 </button>
                 <button
+                  disabled={isDeleting}
                   onClick={async () => {
+                    setIsDeleting(true);
                     try {
                       await authService.deleteAccount();
-                      navigate('/');
+                      setToastMessage('Offboarding initiated. Logging you out...');
+                      setShowToast(true);
+                      setShowDeleteModal(false);
+                      setTimeout(() => {
+                        navigate('/');
+                      }, 2500);
                     } catch (err) {
                       console.error("Failed to delete account", err);
                       alert("Failed to delete account");
+                      setIsDeleting(false);
                     }
                   }}
-                  className="flex-1 px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 hover:border-red-500/50 rounded-xl transition-all font-medium shadow-[0_0_15px_rgba(239,68,68,0.2)] hover:shadow-[0_0_20px_rgba(239,68,68,0.4)] cursor-none"
+                  className="flex-1 px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 hover:border-red-500/50 rounded-xl transition-all font-medium shadow-[0_0_15px_rgba(239,68,68,0.2)] hover:shadow-[0_0_20px_rgba(239,68,68,0.4)] cursor-none disabled:opacity-50"
                 >
-                  Delete Permanently
+                  Agree and Delete Permanently
                 </button>
               </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Success Toast Notification */}
+      <AnimatePresence>
+        {showToast && (
+          <div className="fixed inset-0 z-50 pointer-events-none flex items-end justify-center p-8">
+            <motion.div
+              initial={{ opacity: 0, y: 50, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 20, scale: 0.95 }}
+              className="bg-slate-900/95 border border-teal-500/30 text-slate-100 px-6 py-4 rounded-2xl shadow-[0_0_30px_rgba(20,184,166,0.3)] flex items-center gap-3 backdrop-blur-md max-w-sm pointer-events-auto cursor-none"
+            >
+              <CheckCircle2 className="w-5 h-5 text-teal-400 shrink-0" />
+              <span className="font-semibold text-sm">{toastMessage}</span>
             </motion.div>
           </div>
         )}

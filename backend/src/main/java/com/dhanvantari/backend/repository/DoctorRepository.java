@@ -23,6 +23,7 @@ public interface DoctorRepository extends JpaRepository<Doctor, UUID> {
     List<Doctor> findByCityAndSpecialization(String city, String specialization);
 
     @Query("SELECT d FROM Doctor d WHERE " +
+           "d.accountStatus = com.dhanvantari.backend.entity.AccountStatus.ACTIVE AND " +
            "(:state IS NULL OR d.state = :state) AND " +
            "(:city IS NULL OR d.city = :city) AND " +
            "(:specialization IS NULL OR d.specialization = :specialization)")
