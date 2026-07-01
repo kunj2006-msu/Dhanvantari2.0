@@ -7,18 +7,8 @@ import AuthModal from '../components/AuthModal';
 import heroVideo from '../assets/hero-bg.mp4';
 
 const LANGUAGES = [
-  { code: 'en', label: 'English' },
-  { code: 'hi', label: 'हिंदी (Hindi)' },
-  { code: 'gu', label: 'ગુજરાતી (Gujarati)' },
-  { code: 'mr', label: 'मराठी (Marathi)' },
-  { code: 'bn', label: 'বাংলা (Bengali)' },
-  { code: 'te', label: 'తెలుగు (Telugu)' },
-  { code: 'ta', label: 'தமிழ் (Tamil)' },
-  { code: 'kn', label: 'ಕನ್ನಡ (Kannada)' },
-  { code: 'ml', label: 'മലയാളം (Malayalam)' },
-  { code: 'pa', label: 'ਪੰਜਾਬੀ (Punjabi)' },
-  { code: 'ur', label: 'اردو (Urdu)' },
-  { code: 'or', label: 'ଓଡ଼ିଆ (Odia)' }
+  { code: 'en-IN', label: 'English' },
+  { code: 'gu-IN', label: 'ગુજરાતી (Gujarati)' }
 ];
 
 export default function Home() {
@@ -33,7 +23,7 @@ export default function Home() {
     setIsAuthModalOpen(true);
   };
 
-  const currentLangLabel = LANGUAGES.find(l => l.code === (i18n.language || 'en'))?.label || 'English';
+  const currentLangLabel = LANGUAGES.find(l => l.code === (i18n.language || 'en-IN'))?.label || 'English';
 
   return (
     <main className="bg-slate-950 min-h-screen flex flex-col w-full overflow-x-hidden">

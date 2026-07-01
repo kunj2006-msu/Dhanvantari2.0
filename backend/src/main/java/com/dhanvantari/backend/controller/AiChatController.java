@@ -6,6 +6,7 @@ import com.dhanvantari.backend.entity.MoodRecord;
 import com.dhanvantari.backend.service.HuggingFaceLlamaService;
 import com.dhanvantari.backend.service.AiMentalHealthEngine;
 import com.dhanvantari.backend.service.ChatService; // NEW: Import our memory service
+import com.dhanvantari.backend.service.RagService;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,6 +29,8 @@ public class AiChatController {
     
     // NEW: Inject our ChatService instead of the raw aiTriageEngine
     private final ChatService chatService;
+
+    private final RagService ragService;
 
     @PostMapping("/mental-health")
     public ResponseEntity<String> mentalHealthChat(@RequestBody ChatRequest request) {
@@ -53,15 +56,26 @@ public class AiChatController {
             @RequestBody Map<String, Object> request) { // Changed to Object to safely read numbers
         try {
             String message = (String) request.get("message");
-            String language = request.getOrDefault("language", "gu").toString();
+            String language = request.getOrDefault("language", "gu-IN").toString();
+            if ("gu".equalsIgnoreCase(language) || "gu-IN".equalsIgnoreCase(language)) {
+                language = "gu-IN";
+            } else {
+                language = "en-IN";
+            }
             
             // Extract the sessionId if React sends it (it will be null for new chats)
             Long sessionId = request.get("sessionId") != null ? Long.valueOf(request.get("sessionId").toString()) : null;
             
             String userEmail = userDetails.getUsername();
             
-            // The service now returns the map with { "response": "...", "sessionId": 123 }
-            Map<String, Object> result = chatService.processPatientMessage(userEmail, message, language, sessionId);
+            // Fetch the existing session history
+            String chatHistory = chatService.getRecentChatHistory(sessionId);
+            
+            // Generate answer directly via RagService
+            String ragResponse = ragService.generateAnswer(message, language, chatHistory);
+            
+            // Save user and AI messages in the chat session history
+            Map<String, Object> result = chatService.processPatientMessageWithRag(userEmail, message, language, sessionId, ragResponse);
             
             return ResponseEntity.ok(result);
         } catch (Exception e) {

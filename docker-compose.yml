@@ -1,0 +1,16 @@
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    container_name: dhanvantari-db
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: dhanvantari
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: kunj
+    volumes:
+      - pgvector_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+volumes:
+  pgvector_data:

@@ -4,7 +4,7 @@ import { Globe } from 'lucide-react';
 import HeartPulseMonitor from './HeartPulseMonitor';
 
 const languages = [
-  'English', 'Hindi', 'Gujarati', 'Marathi', 'Bengali', 'Tamil', 'Telugu', 'Kannada', 'Malayalam', 'Punjabi', 'Odia'
+  'English', 'Gujarati'
 ];
 
 export default function Navbar() {

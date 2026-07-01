@@ -68,6 +68,36 @@ public class ChatService {
         return response;
     }
 
+    @Transactional
+    public Map<String, Object> processPatientMessageWithRag(String userEmail, String message, String languageCode, Long sessionId, String aiResponseText) {
+        Patient patient = patientRepository.findByUserEmail(userEmail)
+                .orElseThrow(() -> new RuntimeException("Patient profile not found."));
+
+        // 1. Fetch exact session, or create a brand new one if sessionId is null
+        ChatSession currentSession = getOrCreateSession(patient, languageCode, sessionId, message);
+
+        ChatMessage userMsg = ChatMessage.builder()
+                .session(currentSession)
+                .role("user")
+                .content(message)
+                .build();
+        chatMessageRepository.save(userMsg);
+
+        ChatMessage aiMsg = ChatMessage.builder()
+                .session(currentSession)
+                .role("ai")
+                .content(aiResponseText)
+                .build();
+        chatMessageRepository.save(aiMsg);
+
+        // Return BOTH the AI's response AND the session ID so React knows which room was just created
+        Map<String, Object> response = new java.util.HashMap<>();
+        response.put("response", aiResponseText);
+        response.put("sessionId", currentSession.getId());
+        
+        return response;
+    }
+
     // UPDATED: No more 12-hour rule. Strictly obeys the frontend.
     private ChatSession getOrCreateSession(Patient patient, String languageCode, Long sessionId, String firstMessage) {
         if (sessionId != null) {
@@ -133,5 +163,16 @@ public class ChatService {
                     return map;
                 })
                 .collect(java.util.stream.Collectors.toList());
+    }
+
+    public String getRecentChatHistory(Long sessionId) {
+        if (sessionId == null) {
+            return "";
+        }
+        List<ChatMessage> allMessages = chatMessageRepository.findBySessionIdOrderByTimestampAsc(sessionId);
+        int startIndex = Math.max(0, allMessages.size() - 6);
+        return allMessages.subList(startIndex, allMessages.size()).stream()
+                .map(msg -> (msg.getRole().equalsIgnoreCase("ai") ? "AI: " : "User: ") + msg.getContent())
+                .collect(Collectors.joining("\n"));
     }
 }

@@ -539,7 +539,7 @@ export default function DoctorDashboard() {
     navigate('/');
   };
 
-  const languages = ['English', 'Hindi', 'Gujarati', 'Marathi', 'Bengali', 'Telugu', 'Tamil', 'Urdu', 'Kannada', 'Odia', 'Malayalam'];
+  const languages = ['English', 'Gujarati'];
 
   return (
     <div className="min-h-screen bg-slate-950 flex flex-col font-sans cursor-none">

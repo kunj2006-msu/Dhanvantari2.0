@@ -585,10 +585,10 @@ const MentalHealthCanvas = ({ language }: any) => {
 
     try {
       const langCodeMap: Record<string, string> = {
-        'English': 'en', 'Hindi': 'hi', 'Gujarati': 'gu', 'Marathi': 'mr',
-        'Bengali': 'bn', 'Telugu': 'te', 'Tamil': 'ta', 'Urdu': 'ur'
+        'English': 'en-IN',
+        'Gujarati': 'gu-IN'
       };
-      const code = langCodeMap[language] || 'en';
+      const code = langCodeMap[language] || 'en-IN';
 
       const data = await sendMentalHealthMessage(newHistory, code);
       setMessages(prev => [...prev, { role: 'ai', text: data.response }]);
@@ -715,9 +715,8 @@ const TriageCanvas = ({ isHistoryOpen, setIsHistoryOpen, language }: any) => {
   };
 
   const langCodeMap: Record<string, string> = {
-    'English': 'en', 'Hindi': 'hi', 'Gujarati': 'gu', 'Marathi': 'mr',
-    'Bengali': 'bn', 'Telugu': 'te', 'Tamil': 'ta', 'Urdu': 'ur', 'Kannada': 'kn',
-    'Malayalam': 'ml', 'Odia': 'or'
+    'English': 'en-IN',
+    'Gujarati': 'gu-IN'
   };
 
   const handleSendMessage = async (text: string) => {
@@ -725,7 +724,7 @@ const TriageCanvas = ({ isHistoryOpen, setIsHistoryOpen, language }: any) => {
     setIsLoading(true);
 
     try {
-      const code = langCodeMap[language] || 'en';
+      const code = langCodeMap[language] || 'en-IN';
       const data = await sendTriageMessage(text, code, activeSessionId);
 
       setMessages(prev => [...prev, { role: 'ai', text: data.response }]);
@@ -1430,14 +1429,12 @@ export default function PatientDashboard() {
   };
 
   const langCodeMap: Record<string, string> = {
-    'English': 'en', 'Hindi': 'hi', 'Gujarati': 'gu', 'Marathi': 'mr',
-    'Bengali': 'bn', 'Telugu': 'te', 'Tamil': 'ta', 'Urdu': 'ur', 'Kannada': 'kn',
-    'Malayalam': 'ml', 'Punjabi': 'pa', 'Odia': 'or'
+    'English': 'en-IN',
+    'Gujarati': 'gu-IN'
   };
 
   const languages = [
-    'English', 'Hindi', 'Gujarati', 'Marathi', 'Bengali', 'Telugu',
-    'Tamil', 'Urdu', 'Kannada', 'Odia', 'Malayalam', 'Punjabi'
+    'English', 'Gujarati'
   ];
 
   return (
@@ -1460,7 +1457,7 @@ export default function PatientDashboard() {
                 value={language}
                 onChange={(val) => {
                   setLanguage(val);
-                  const code = langCodeMap[val] || 'en';
+                  const code = langCodeMap[val] || 'en-IN';
                   i18n.changeLanguage(code);
                 }}
                 options={languages}
