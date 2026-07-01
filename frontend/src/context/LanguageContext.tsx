@@ -27,6 +27,7 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     // Ensure i18next has loaded the initial language state before marking context as initialized
     i18n.changeLanguage(languageCode).finally(() => {
       setIsInitialized(true);
+      document.documentElement.setAttribute('lang', languageCode);
     });
   }, []);
 
@@ -34,6 +35,7 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     setLanguageCode(code);
     localStorage.setItem('dhanvantari_lang', code);
     i18n.changeLanguage(code);
+    document.documentElement.setAttribute('lang', code);
   };
 
   const languageName = languageCode === 'gu-IN' ? 'Gujarati' : 'English';

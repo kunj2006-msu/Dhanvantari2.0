@@ -62,3 +62,38 @@ body {
 .ambient-orb {
   animation: floatOrb 10s infinite ease-in-out;
 }
+
+@font-face {
+  font-family: "ITF Gujarati";
+  src: url("https://db.onlinewebfonts.com/t/268451cc92fc08401e4b4883dd9b2320.eot");
+  src: url("https://db.onlinewebfonts.com/t/268451cc92fc08401e4b4883dd9b2320.eot?#iefix") format("embedded-opentype"),
+       url("https://db.onlinewebfonts.com/t/268451cc92fc08401e4b4883dd9b2320.woff2") format("woff2"),
+       url("https://db.onlinewebfonts.com/t/268451cc92fc08401e4b4883dd9b2320.woff") format("woff"),
+       url("https://db.onlinewebfonts.com/t/268451cc92fc08401e4b4883dd9b2320.ttf") format("truetype"),
+       url("https://db.onlinewebfonts.com/t/268451cc92fc08401e4b4883dd9b2320.svg#ITF Gujarati") format("svg");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Apply ITF Gujarati and line-height adjustment when lang is Gujarati */
+html[lang="gu-IN"],
+html[lang="gu-IN"] * {
+  font-family: 'ITF Gujarati', sans-serif !important;
+}
+
+html[lang="gu-IN"] h1,
+html[lang="gu-IN"] h2,
+html[lang="gu-IN"] h3,
+html[lang="gu-IN"] h4,
+html[lang="gu-IN"] h5,
+html[lang="gu-IN"] h6,
+html[lang="gu-IN"] button,
+html[lang="gu-IN"] label,
+html[lang="gu-IN"] p,
+html[lang="gu-IN"] span,
+html[lang="gu-IN"] a,
+html[lang="gu-IN"] textarea,
+html[lang="gu-IN"] input {
+  line-height: 1.55 !important;
+}
