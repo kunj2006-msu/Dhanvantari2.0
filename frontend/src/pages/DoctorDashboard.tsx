@@ -1,9 +1,8 @@
-import { Calendar, Users, LogOut, Stethoscope, Menu, Globe, Clock, User, FileText, Send, Trash2, MessageSquare, AlertCircle, RefreshCw, X, ArrowRight, CheckCircle2 } from 'lucide-react';
+import { Calendar, Users, LogOut, Stethoscope, Menu, Clock, User, FileText, Send, Trash2, MessageSquare, AlertCircle, RefreshCw, X, ArrowRight, CheckCircle2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authService } from '../services/authService';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CustomDropdown } from '../components/CustomDropdown';
 import Profile from '../components/profile/Profile';
 import { fetchDoctorAppointments, updateAppointmentNotes, fetchPatientTriageHistory } from '../services/api';
 import type { DoctorAppointment, PatientTriageSession } from '../services/api';
@@ -507,7 +506,6 @@ export default function DoctorDashboard() {
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
-  const [language, setLanguage] = useState('English');
   const navigate = useNavigate();
   const userName = localStorage.getItem('userName') || 'Doctor';
   const userSpecialization = localStorage.getItem('userSpecialization') || 'Specialist';
@@ -539,8 +537,6 @@ export default function DoctorDashboard() {
     navigate('/');
   };
 
-  const languages = ['English', 'Gujarati'];
-
   return (
     <div className="min-h-screen bg-slate-950 flex flex-col font-sans cursor-none">
       {/* Top Header */}
@@ -552,19 +548,6 @@ export default function DoctorDashboard() {
           <span className="text-xl font-bold bg-gradient-to-r from-teal-400 to-cyan-400 bg-clip-text text-transparent cursor-none">
             Dhanvantari
           </span>
-        </div>
-
-        <div className="flex items-center gap-4 cursor-none">
-          <div className="flex items-center gap-2 bg-slate-900 border border-white/10 rounded-lg px-3 py-1.5 focus-within:ring-2 focus-within:ring-teal-500 transition-all cursor-none">
-            <Globe className="w-4 h-4 text-slate-400 cursor-none" />
-            <div className="w-40 cursor-none">
-              <CustomDropdown
-                value={language}
-                onChange={setLanguage}
-                options={languages}
-              />
-            </div>
-          </div>
         </div>
       </header>
 
