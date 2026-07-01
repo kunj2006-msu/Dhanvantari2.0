@@ -5,25 +5,27 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Features from '../components/Features';
 import AuthModal from '../components/AuthModal';
 import heroVideo from '../assets/hero-bg.mp4';
+import { useLanguage } from '../context/LanguageContext';
 
 const LANGUAGES = [
   { code: 'en-IN', label: 'English' },
   { code: 'gu-IN', label: 'ગુજરાતી (Gujarati)' }
-];
+] as const;
 
 export default function Home() {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [authModalType, setAuthModalType] = useState<'patient' | 'doctor'>('patient');
   const [isLangOpen, setIsLangOpen] = useState(false);
 
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
+  const { languageCode, languageName, changeLanguage } = useLanguage();
 
   const handleOpenAuth = (type: 'patient' | 'doctor') => {
     setAuthModalType(type);
     setIsAuthModalOpen(true);
   };
 
-  const currentLangLabel = LANGUAGES.find(l => l.code === (i18n.language || 'en-IN'))?.label || 'English';
+  const currentLangLabel = languageName;
 
   return (
     <main className="bg-slate-950 min-h-screen flex flex-col w-full overflow-x-hidden">
@@ -90,10 +92,10 @@ export default function Home() {
                       <button
                         key={lang.code}
                         onClick={() => {
-                          i18n.changeLanguage(lang.code);
+                          changeLanguage(lang.code);
                           setIsLangOpen(false);
                         }}
-                        className={`w-full text-left px-5 py-3 text-sm transition-colors ${i18n.language === lang.code
+                        className={`w-full text-left px-5 py-3 text-sm transition-colors ${languageCode === lang.code
                           ? 'bg-teal-500/20 text-teal-300 font-semibold'
                           : 'text-slate-300 hover:bg-white/10 hover:text-white'
                           }`}

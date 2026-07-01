@@ -4,9 +4,12 @@ import './index.css'
 import 'leaflet/dist/leaflet.css'
 import App from './App.tsx'
 import './i18n';
+import { LanguageProvider } from './context/LanguageContext';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <App />
+    <LanguageProvider>
+      <App />
+    </LanguageProvider>
   </StrictMode>,
 )

@@ -10,6 +10,7 @@ import { CustomDropdown } from '../components/CustomDropdown';
 import { CustomDatePicker } from '../components/CustomDatePicker';
 import Profile from '../components/profile/Profile';
 import { SearchableSelect } from '../components/SearchableSelect';
+import { useLanguage } from '../context/LanguageContext';
 
 const OverviewCanvas = ({ onSelectView }: { onSelectView: (view: any) => void }) => {
   const { t } = useTranslation();
@@ -516,21 +517,22 @@ const GlassmorphicMoodCalendar = ({ moodData = {} }: any) => {
   );
 };
 
-const MentalHealthCanvas = ({ language }: any) => {
+const MentalHealthCanvas = () => {
   const { t, i18n } = useTranslation();
+  const { languageCode, isInitialized } = useLanguage();
   const [selectedMood, setSelectedMood] = useState<string | null>(null);
   const [messages, setMessages] = useState<{ role: string, text: string }[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [calendarData, setCalendarData] = useState<any>({});
 
   useEffect(() => {
-    if (messages.length === 1 && messages[0].role === 'ai' && selectedMood) {
+    if (isInitialized && messages.length === 1 && messages[0].role === 'ai' && selectedMood) {
       setMessages([{
         role: 'ai',
         text: t('mentalHealthGreeting', { mood: selectedMood.toLowerCase() })
       }]);
     }
-  }, [i18n.language, selectedMood, t]);
+  }, [isInitialized, i18n.language, selectedMood, t]);
 
   const moodStyles: Record<string, any> = {
     'Terrible': { color: 'bg-red-500/20 border-red-500/50 text-red-400', emoji: '😫', border: 'hover:border-red-500/50', bg: 'hover:bg-red-500/10' },
@@ -573,10 +575,10 @@ const MentalHealthCanvas = ({ language }: any) => {
       }
     };
 
-    if (!selectedMood) {
+    if (isInitialized && !selectedMood) {
       loadMoods();
     }
-  }, [selectedMood]);
+  }, [isInitialized, selectedMood]);
 
   const handleSendMessage = async (text: string) => {
     const newHistory = [...messages, { role: 'user', text }];
@@ -584,13 +586,7 @@ const MentalHealthCanvas = ({ language }: any) => {
     setIsLoading(true);
 
     try {
-      const langCodeMap: Record<string, string> = {
-        'English': 'en-IN',
-        'Gujarati': 'gu-IN'
-      };
-      const code = langCodeMap[language] || 'en-IN';
-
-      const data = await sendMentalHealthMessage(newHistory, code);
+      const data = await sendMentalHealthMessage(newHistory, languageCode);
       setMessages(prev => [...prev, { role: 'ai', text: data.response }]);
     } catch (error) {
       setMessages(prev => [...prev, { role: 'ai', text: "I'm having trouble connecting right now, but please know I'm here for you. Let's try again in a moment." }]);
@@ -603,6 +599,17 @@ const MentalHealthCanvas = ({ language }: any) => {
     setSelectedMood(null);
     setMessages([]);
   };
+
+  if (!isInitialized) {
+    return (
+      <div className="flex-1 flex items-center justify-center bg-slate-950">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-8 h-8 rounded-full border-2 border-teal-500/20 border-t-teal-500 animate-spin"></div>
+          <span className="text-slate-400 text-sm">Loading support workspace...</span>
+        </div>
+      </div>
+    );
+  }
 
   if (!selectedMood) {
     return (
@@ -650,18 +657,12 @@ const MentalHealthCanvas = ({ language }: any) => {
   );
 };
 
-const TriageCanvas = ({ isHistoryOpen, setIsHistoryOpen, language }: any) => {
+const TriageCanvas = ({ isHistoryOpen, setIsHistoryOpen }: any) => {
   const { t, i18n } = useTranslation();
-  const defaultMessage = { role: 'ai', text: t('chatbotGreeting') };
+  const { languageCode, isInitialized } = useLanguage();
 
-  const [messages, setMessages] = useState([defaultMessage]);
+  const [messages, setMessages] = useState<{ role: string, text: string }[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-
-  useEffect(() => {
-    if (messages.length === 1 && messages[0].role === 'ai') {
-      setMessages([{ role: 'ai', text: t('chatbotGreeting') }]);
-    }
-  }, [i18n.language, t]);
 
   const [sessions, setSessions] = useState<any[]>([]);
   const [activeSessionId, setActiveSessionId] = useState<number | null>(null);
@@ -682,11 +683,21 @@ const TriageCanvas = ({ isHistoryOpen, setIsHistoryOpen, language }: any) => {
   };
 
   useEffect(() => {
-    loadHistory();
-  }, []);
+    if (isInitialized) {
+      loadHistory();
+    }
+  }, [isInitialized]);
+
+  useEffect(() => {
+    if (isInitialized) {
+      if (activeSessionId === null && messages.length === 0) {
+        setMessages([{ role: 'ai', text: t('chatbotGreeting') }]);
+      }
+    }
+  }, [isInitialized, activeSessionId, i18n.language, t]);
 
   const handleNewSession = () => {
-    setMessages([defaultMessage]);
+    setMessages([{ role: 'ai', text: t('chatbotGreeting') }]);
     setActiveSessionId(null);
   };
 
@@ -708,15 +719,10 @@ const TriageCanvas = ({ isHistoryOpen, setIsHistoryOpen, language }: any) => {
     if (pastMessages && pastMessages.length > 0) {
       setMessages(pastMessages);
     } else {
-      setMessages([defaultMessage]);
+      setMessages([{ role: 'ai', text: t('chatbotGreeting') }]);
     }
 
     setIsLoading(false);
-  };
-
-  const langCodeMap: Record<string, string> = {
-    'English': 'en-IN',
-    'Gujarati': 'gu-IN'
   };
 
   const handleSendMessage = async (text: string) => {
@@ -724,8 +730,7 @@ const TriageCanvas = ({ isHistoryOpen, setIsHistoryOpen, language }: any) => {
     setIsLoading(true);
 
     try {
-      const code = langCodeMap[language] || 'en-IN';
-      const data = await sendTriageMessage(text, code, activeSessionId);
+      const data = await sendTriageMessage(text, languageCode, activeSessionId);
 
       setMessages(prev => [...prev, { role: 'ai', text: data.response }]);
 
@@ -740,6 +745,18 @@ const TriageCanvas = ({ isHistoryOpen, setIsHistoryOpen, language }: any) => {
       setIsLoading(false);
     }
   };
+
+  if (!isInitialized) {
+    return (
+      <div className="flex-1 flex items-center justify-center bg-slate-950">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-8 h-8 rounded-full border-2 border-teal-500/20 border-t-teal-500 animate-spin"></div>
+          <span className="text-slate-400 text-sm">Loading triage workspace...</span>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <>
       <ChatInterface
@@ -1408,12 +1425,12 @@ const NavItem = ({ icon: Icon, label, active, onClick, isNavOpen, isDanger = fal
 };
 
 export default function PatientDashboard() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
+  const { languageName, changeLanguage } = useLanguage();
   const [activeView, setActiveView] = useState<ViewState>('overview');
   const [isNavOpen, setIsNavOpen] = useState(true);
   const [isHistoryOpen, setIsHistoryOpen] = useState(true);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [language, setLanguage] = useState('English');
   const navigate = useNavigate();
   const userName = localStorage.getItem('userName') || 'Patient';
 
@@ -1426,11 +1443,6 @@ export default function PatientDashboard() {
     setActiveView(feature);
     setIsNavOpen(false);
     setIsHistoryOpen(true);
-  };
-
-  const langCodeMap: Record<string, string> = {
-    'English': 'en-IN',
-    'Gujarati': 'gu-IN'
   };
 
   const languages = [
@@ -1454,11 +1466,10 @@ export default function PatientDashboard() {
             <Globe className="w-4 h-4 text-slate-400" />
             <div className="w-40">
               <CustomDropdown
-                value={language}
+                value={languageName}
                 onChange={(val) => {
-                  setLanguage(val);
-                  const code = langCodeMap[val] || 'en-IN';
-                  i18n.changeLanguage(code);
+                  const code = val === 'Gujarati' ? 'gu-IN' : 'en-IN';
+                  changeLanguage(code);
                 }}
                 options={languages}
               />
@@ -1564,8 +1575,8 @@ export default function PatientDashboard() {
                 className="absolute inset-0 w-full h-full flex"
               >
                 {activeView === 'overview' && <OverviewCanvas onSelectView={handleFeatureSelect} />}
-                {activeView === 'mental-health' && <MentalHealthCanvas isHistoryOpen={isHistoryOpen} setIsHistoryOpen={setIsHistoryOpen} language={language} />}
-                {activeView === 'triage' && <TriageCanvas isHistoryOpen={isHistoryOpen} setIsHistoryOpen={setIsHistoryOpen} language={language} />}
+                {activeView === 'mental-health' && <MentalHealthCanvas />}
+                {activeView === 'triage' && <TriageCanvas isHistoryOpen={isHistoryOpen} setIsHistoryOpen={setIsHistoryOpen} />}
                 {activeView === 'appointments' && <AppointmentsCanvas isHistoryOpen={isHistoryOpen} setIsHistoryOpen={setIsHistoryOpen} />}
                 {activeView === 'see-profile' && <Profile />}
                 {activeView === 'edit-profile' && <EditProfileCanvas />}
